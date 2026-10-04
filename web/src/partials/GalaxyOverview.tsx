@@ -4,7 +4,10 @@ import StarTypeIcon, {
 } from "../components/StarTypeIcon"
 import styles from "~styles"
 import Starmap from "./Starmap"
-import { type FC, Fragment } from "react"
+import { type FC, Fragment, useState } from "react"
+import Button from "../components/Button"
+import { Sparkles, Pause } from "lucide-react"
+import type { GalaxyAnimationStatus } from "./GalaxyAnimation"
 import { useLingui } from "#lingui"
 import { useStarTypeFullName, useVeinNames, useGasTypeNames } from "../names"
 import {
@@ -103,6 +106,27 @@ const GalaxyOverview: FC<{
     displayNames?: ReadonlyMap<number, string>
 }> = (props) => {
     const { t } = useLingui()
+    const [animationEnabled, setAnimationEnabled] = useState(() => {
+        try {
+            return localStorage.getItem("dsp-seed-finder-animation") !== "off"
+        } catch {
+            return true
+        }
+    })
+    const [animationStatus, setAnimationStatus] =
+        useState<GalaxyAnimationStatus>("loading")
+    function toggleAnimation() {
+        const enabled = !animationEnabled
+        setAnimationEnabled(enabled)
+        try {
+            localStorage.setItem(
+                "dsp-seed-finder-animation",
+                enabled ? "on" : "off",
+            )
+        } catch {
+            /* Display remains functional when browser storage is unavailable. */
+        }
+    }
     const getStarType = useStarTypeFullName()
     const veinNames = useVeinNames()
     const gasTypeNames = useGasTypeNames()
@@ -183,32 +207,6 @@ const GalaxyOverview: FC<{
     const allGases = () => combineAllGases(props.galaxy.stars)
     return (
         <div className={styles.root}>
-            <div className={styles.map}>
-                <div className={styles.mapHeader}>
-                    <span>{t`Starmap`}</span>
-                    <span
-                        className={styles.mapHint}
-                    >{t`Select a star to view its planets`}</span>
-                </div>
-                <Starmap
-                    galaxy={props.galaxy}
-                    search={props.search}
-                    displayNames={props.displayNames}
-                />
-                <div className={styles.mapFooter}>
-                    <span className={styles.startMarker} />
-                    {t`Starting system`}
-                    <span
-                        className={styles.mapHint}
-                    >{t`2D projection · All stars shown`}</span>
-                    <a
-                        className={styles.credits}
-                        href={starIconAttributionHref}
-                        target="_blank"
-                        rel="noreferrer"
-                    >{t`Icon credits`}</a>
-                </div>
-            </div>
             <div className={styles.info}>
                 <div className={styles.card}>
                     <div className={styles.title}>
@@ -294,6 +292,65 @@ const GalaxyOverview: FC<{
                         </div>
                     </>
                 ) : null}
+            </div>
+            <div className={styles.map}>
+                <div className={styles.mapHeader}>
+                    <span>{t`Starmap`}</span>
+                    <span
+                        className={styles.mapHint}
+                    >{t`Select a star to view its planets`}</span>
+                    <Button
+                        kind="outline"
+                        className={styles.motionButton}
+                        onClick={toggleAnimation}
+                        aria-pressed={
+                            animationEnabled &&
+                            animationStatus !== "unavailable"
+                        }
+                        aria-label={
+                            animationStatus === "unavailable"
+                                ? t`Static map: WebGL is unavailable`
+                                : animationEnabled
+                                  ? t`Pause star animation`
+                                  : t`Enable star animation`
+                        }
+                        title={
+                            animationStatus === "unavailable"
+                                ? t`Static map: WebGL is unavailable`
+                                : t`Respects reduced motion settings`
+                        }
+                        disabled={animationStatus === "unavailable"}
+                    >
+                        {animationEnabled ? (
+                            <Pause size={14} aria-hidden="true" />
+                        ) : (
+                            <Sparkles size={14} aria-hidden="true" />
+                        )}
+                        {animationStatus === "unavailable"
+                            ? t`Static map`
+                            : t`Animation`}
+                    </Button>
+                </div>
+                <Starmap
+                    galaxy={props.galaxy}
+                    search={props.search}
+                    displayNames={props.displayNames}
+                    animationEnabled={animationEnabled}
+                    onAnimationStatus={setAnimationStatus}
+                />
+                <div className={styles.mapFooter}>
+                    <span className={styles.startMarker} />
+                    {t`Starting system`}
+                    <span
+                        className={styles.mapHint}
+                    >{t`2D projection · All stars shown`}</span>
+                    <a
+                        className={styles.credits}
+                        href={starIconAttributionHref}
+                        target="_blank"
+                        rel="noreferrer"
+                    >{t`Icon credits`}</a>
+                </div>
             </div>
         </div>
     )

@@ -7,6 +7,7 @@ import { StarType } from "../enums"
 import { setupI18n } from "@lingui/core"
 import { I18nProvider } from "@lingui/react"
 
+vi.mock("./GalaxyAnimation", () => ({ default: () => null }))
 vi.mock("@floating-ui/dom", () => ({ computePosition: vi.fn(), flip: vi.fn() }))
 afterEach(cleanup)
 beforeEach(() => {

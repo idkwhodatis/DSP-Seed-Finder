@@ -47,7 +47,7 @@ msgstr "黑雾巢穴的 <0/> 数目 <1/>"
 msgid "<0/> to <1/>"
 msgstr "<0/> 至 <1/>"
 
-#: web/src/partials/GalaxyOverview.tsx:203
+#: web/src/partials/GalaxyOverview.tsx:346
 msgid "2D projection · All stars shown"
 msgstr "二维投影 · 显示全部恒星"
 
@@ -78,6 +78,10 @@ msgstr "所有"
 #: web/src/partials/RuleEditor.tsx:943
 msgid "AND"
 msgstr "与"
+
+#: web/src/partials/GalaxyOverview.tsx:331
+msgid "Animation"
+msgstr "动画"
 
 #: web/src/partials/RuleEditor.tsx:503
 msgid "any"
@@ -272,13 +276,17 @@ msgstr "下载"
 msgid "DSP Seed Finder"
 msgstr "戴森球计划种子查找器"
 
+#: web/src/partials/GalaxyOverview.tsx:315
+msgid "Enable star animation"
+msgstr "开启恒星动画"
+
 #: web/src/partials/RuleEditor.tsx:196
 msgid "estimated"
 msgstr "大约"
 
 #. placeholder {0}: min()
 #. placeholder {1}: max()
-#: web/src/partials/GalaxyOverview.tsx:90
+#: web/src/partials/GalaxyOverview.tsx:93
 #: web/src/partials/StarView.tsx:308
 msgid ""
 "Estimated:\n"
@@ -361,7 +369,7 @@ msgid "Gas Giant"
 msgstr "气态巨行星"
 
 #: web/src/names.tsx:52
-#: web/src/partials/GalaxyOverview.tsx:277
+#: web/src/partials/GalaxyOverview.tsx:275
 msgid "Gas rate"
 msgstr "采集气体速度"
 
@@ -477,7 +485,7 @@ msgstr "冰巨行星"
 msgid "Icefrostia"
 msgstr "极寒冻土"
 
-#: web/src/partials/GalaxyOverview.tsx:209
+#: web/src/partials/GalaxyOverview.tsx:352
 msgid "Icon credits"
 msgstr "图标来源"
 
@@ -509,12 +517,12 @@ msgstr "起始"
 msgid "Initial number of hives"
 msgstr "起始巢穴数目"
 
-#: web/src/views/Galaxy.tsx:461
+#: web/src/views/Galaxy.tsx:464
 msgid "Invalid seed."
 msgstr "无效的种子。"
 
-#: web/src/views/Galaxy.tsx:426
-#: web/src/views/Galaxy.tsx:473
+#: web/src/views/Galaxy.tsx:429
+#: web/src/views/Galaxy.tsx:476
 msgid "Invalid star index."
 msgstr "无效的恒星序号。"
 
@@ -728,6 +736,10 @@ msgstr "潘多拉沼泽"
 msgid "Pause"
 msgstr "暂停"
 
+#: web/src/partials/GalaxyOverview.tsx:314
+msgid "Pause star animation"
+msgstr "暂停恒星动画"
+
 #: web/src/names.tsx:46
 msgid "Planet count"
 msgstr "行星数量"
@@ -791,10 +803,14 @@ msgstr "红巨星"
 msgid "Resource multiplier"
 msgstr "资源倍率"
 
-#: web/src/partials/GalaxyOverview.tsx:250
+#: web/src/partials/GalaxyOverview.tsx:248
 #: web/src/partials/StarView.tsx:655
 msgid "Resources"
 msgstr "资源"
+
+#: web/src/partials/GalaxyOverview.tsx:320
+msgid "Respects reduced motion settings"
+msgstr "遵循系统的减少动态效果设置"
 
 #: web/src/views/FindGalaxy.tsx:540
 msgid "Resume"
@@ -861,7 +877,7 @@ msgstr "正在搜索…"
 
 #: web/src/exporter/workbookGenerator.worker.tsx:55
 #: web/src/exporter/workbookGenerator.worker.tsx:79
-#: web/src/partials/GalaxyOverview.tsx:216
+#: web/src/partials/GalaxyOverview.tsx:214
 #: web/src/views/Galaxy.tsx:64
 msgid "Seed"
 msgstr "种子"
@@ -879,7 +895,7 @@ msgstr "种子范围"
 msgid "Seed: "
 msgstr "种子: "
 
-#: web/src/partials/GalaxyOverview.tsx:191
+#: web/src/partials/GalaxyOverview.tsx:301
 msgid "Select a star to view its planets"
 msgstr "选择恒星以查看其行星"
 
@@ -917,12 +933,12 @@ msgstr "恒星查找器"
 msgid "Star Finder is no longer supported. Please use Galaxy Finder instead."
 msgstr "恒星查找器已停用。请改用星系查找器。"
 
-#: web/src/partials/GalaxyOverview.tsx:224
+#: web/src/partials/GalaxyOverview.tsx:222
 msgid "Star types"
 msgstr "恒星类型"
 
-#: web/src/partials/GalaxyOverview.tsx:188
-#: web/src/partials/Starmap.tsx:310
+#: web/src/partials/GalaxyOverview.tsx:298
+#: web/src/partials/Starmap.tsx:264
 #: web/src/views/Galaxy.tsx:360
 msgid "Starmap"
 msgstr "星系图"
@@ -932,9 +948,18 @@ msgid "Start"
 msgstr "开始搜索"
 
 #: web/src/names.tsx:38
-#: web/src/partials/GalaxyOverview.tsx:200
+#: web/src/partials/GalaxyOverview.tsx:343
 msgid "Starting system"
 msgstr "初始星系"
+
+#: web/src/partials/GalaxyOverview.tsx:330
+msgid "Static map"
+msgstr "静态星图"
+
+#: web/src/partials/GalaxyOverview.tsx:312
+#: web/src/partials/GalaxyOverview.tsx:319
+msgid "Static map: WebGL is unavailable"
+msgstr "静态星图：WebGL 不可用"
 
 #: web/src/exporter/workbookGenerator.worker.tsx:20
 #: web/src/names.tsx:67

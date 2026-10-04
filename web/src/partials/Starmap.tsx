@@ -1,4 +1,11 @@
-import { useEffect, useId, useRef, type FC, type SVGProps } from "react"
+import {
+    useEffect,
+    useId,
+    useRef,
+    useMemo,
+    type FC,
+    type SVGProps,
+} from "react"
 import { createPortal } from "react-dom"
 import { Link, useNavigate } from "react-router-dom"
 import { computePosition, flip } from "@floating-ui/dom"
@@ -6,50 +13,8 @@ import { useLiveState } from "../hooks/useLiveState"
 import { StarType } from "../enums"
 import { useLingui } from "#lingui"
 import styles from "~styles"
-
-type Color = [number, number, number]
-
-function toRGB(color: string): Color {
-    return [
-        parseInt(color.slice(1, 3), 16),
-        parseInt(color.slice(3, 5), 16),
-        parseInt(color.slice(5), 16),
-    ]
-}
-
-const colors: [number, Color][] = [
-    [0, toRGB("#fe243b")],
-    [0.05400363728404045, toRGB("#fe902f")],
-    [0.08210773766040802, toRGB("#feb524")],
-    [0.09922304004430771, toRGB("#fec721")],
-    [0.15128976106643677, toRGB("#fef71e")],
-    [0.23878754675388336, toRGB("#fefa00")],
-    [0.27973926067352295, toRGB("#fefe00")],
-    [0.3280837833881378, toRGB("#fefe07")],
-    [0.42586174607276917, toRGB("#fefe98")],
-    [0.5108104348182678, toRGB("#fefef3")],
-    [0.54461669921875, toRGB("#fefefe")],
-    [0.7830636501312256, toRGB("#fefefe")],
-    [0.8255955576896667, toRGB("#cafefe")],
-    [0.8672537803649902, toRGB("#43fefe")],
-    [0.883392870426178, toRGB("#00fefe")],
-    [0.9545682668685913, toRGB("#01d3fe")],
-    [1, toRGB("#0072fe")],
-]
-
-const neutronStarColor = "#b685fe"
-const blackHoleColor = "#6d40b1" // not black because it is not very visible
-
-function getStarColor(color: float) {
-    if (color >= 1) return colors[colors.length - 1]![1]
-    if (color <= 0) return colors[0]![1]
-    const index = colors.findLastIndex(([v]) => v <= color)
-    const color1 = colors[index]!
-    if (color1[0] === color) return color1[1]
-    const color2 = colors[index + 1]!
-    const t = (color - color1[0]) / (color2[0] - color1[0])
-    return color1[1].map((c, i) => c + t * (color2[1][i]! - c)) as Color
-}
+import GalaxyAnimation, { type GalaxyAnimationStatus } from "./GalaxyAnimation"
+import { getGalaxyBounds, getGalaxyStarColor } from "./GalaxyAnimation.math"
 
 function sqrDistance([x1, y1, z1]: Position, [x2, y2, z2]: Position) {
     const x = x2 - x1
@@ -161,12 +126,7 @@ const StarNode: FC<{
     const popup = useRef<HTMLAnchorElement>(null)
     const popupId = useId()
     const visible = hover() || focused()
-    const color =
-        props.star.type === StarType.BlackHole
-            ? blackHoleColor
-            : props.star.type === StarType.NeutronStar
-              ? neutronStarColor
-              : `rgb(${getStarColor(props.star.color).join(", ")})`
+    const color = `rgb(${getGalaxyStarColor(props.star).join(", ")})`
     const url = `/galaxy/${props.seed}/${props.star.index}${props.search}`
 
     useEffect(() => {
@@ -281,61 +241,56 @@ const Starmap: FC<{
     galaxy: Galaxy
     search: string
     displayNames?: ReadonlyMap<number, string>
+    animationEnabled?: boolean
+    onAnimationStatus?: (status: GalaxyAnimationStatus) => void
 }> = (props) => {
     const { t } = useLingui()
-    function getViewBox() {
-        if (props.galaxy.stars.length === 0) return "-2 -2 4 4"
-        let top = -Infinity,
-            bottom = Infinity,
-            left = Infinity,
-            right = -Infinity
-        for (const star of props.galaxy.stars) {
-            const [x, , y] = star.position
-            top = Math.max(top, y)
-            bottom = Math.min(bottom, y)
-            left = Math.min(left, x)
-            right = Math.max(right, x)
-        }
-        top += 2
-        bottom -= 2
-        left -= 2
-        right += 2
-        return `${left} ${-top} ${right - left} ${top - bottom}`
-    }
+    const bounds = useMemo(
+        () => getGalaxyBounds(props.galaxy.stars),
+        [props.galaxy.stars],
+    )
     return (
-        <svg
-            viewBox={getViewBox()}
-            preserveAspectRatio="xMidYMid meet"
-            role="group"
-            aria-label={t`Starmap`}
-            className={styles.starmap}
-        >
-            {getConnectors(props.galaxy.stars).map(
-                ([[x1, , y1], [x2, , y2]], index) => (
-                    <line
-                        key={index}
-                        x1={x1}
-                        y1={-y1}
-                        x2={x2}
-                        y2={-y2}
-                        strokeWidth={0.07}
-                        stroke="currentColor"
-                        className={styles.connector}
-                    />
-                ),
-            )}
-            {props.galaxy.stars
-                .toSorted((a, b) => a.position[1] - b.position[1])
-                .map((star) => (
-                    <StarNode
-                        key={star.index}
-                        star={star}
-                        seed={props.galaxy.seed}
-                        search={props.search}
-                        displayName={props.displayNames?.get(star.index)}
-                    />
-                ))}
-        </svg>
+        <div className={styles.stage}>
+            <GalaxyAnimation
+                galaxy={props.galaxy}
+                bounds={bounds}
+                enabled={props.animationEnabled ?? true}
+                onStatus={props.onAnimationStatus}
+            />
+            <svg
+                viewBox={bounds.join(" ")}
+                preserveAspectRatio="xMidYMid meet"
+                role="group"
+                aria-label={t`Starmap`}
+                className={styles.starmap}
+            >
+                {getConnectors(props.galaxy.stars).map(
+                    ([[x1, , y1], [x2, , y2]], index) => (
+                        <line
+                            key={index}
+                            x1={x1}
+                            y1={-y1}
+                            x2={x2}
+                            y2={-y2}
+                            strokeWidth={0.07}
+                            stroke="currentColor"
+                            className={styles.connector}
+                        />
+                    ),
+                )}
+                {props.galaxy.stars
+                    .toSorted((a, b) => a.position[1] - b.position[1])
+                    .map((star) => (
+                        <StarNode
+                            key={star.index}
+                            star={star}
+                            seed={props.galaxy.seed}
+                            search={props.search}
+                            displayName={props.displayNames?.get(star.index)}
+                        />
+                    ))}
+            </svg>
+        </div>
     )
 }
 

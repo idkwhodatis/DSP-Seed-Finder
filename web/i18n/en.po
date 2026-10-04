@@ -47,7 +47,7 @@ msgstr ""
 msgid "<0/> to <1/>"
 msgstr ""
 
-#: web/src/partials/GalaxyOverview.tsx:203
+#: web/src/partials/GalaxyOverview.tsx:346
 msgid "2D projection · All stars shown"
 msgstr ""
 
@@ -77,6 +77,10 @@ msgstr ""
 #: web/src/partials/MultiRuleEditor.tsx:237
 #: web/src/partials/RuleEditor.tsx:943
 msgid "AND"
+msgstr ""
+
+#: web/src/partials/GalaxyOverview.tsx:331
+msgid "Animation"
 msgstr ""
 
 #: web/src/partials/RuleEditor.tsx:503
@@ -272,13 +276,17 @@ msgstr ""
 msgid "DSP Seed Finder"
 msgstr ""
 
+#: web/src/partials/GalaxyOverview.tsx:315
+msgid "Enable star animation"
+msgstr ""
+
 #: web/src/partials/RuleEditor.tsx:196
 msgid "estimated"
 msgstr ""
 
 #. placeholder {0}: min()
 #. placeholder {1}: max()
-#: web/src/partials/GalaxyOverview.tsx:90
+#: web/src/partials/GalaxyOverview.tsx:93
 #: web/src/partials/StarView.tsx:308
 msgid ""
 "Estimated:\n"
@@ -361,7 +369,7 @@ msgid "Gas Giant"
 msgstr ""
 
 #: web/src/names.tsx:52
-#: web/src/partials/GalaxyOverview.tsx:277
+#: web/src/partials/GalaxyOverview.tsx:275
 msgid "Gas rate"
 msgstr ""
 
@@ -477,7 +485,7 @@ msgstr ""
 msgid "Icefrostia"
 msgstr ""
 
-#: web/src/partials/GalaxyOverview.tsx:209
+#: web/src/partials/GalaxyOverview.tsx:352
 msgid "Icon credits"
 msgstr ""
 
@@ -509,12 +517,12 @@ msgstr ""
 msgid "Initial number of hives"
 msgstr ""
 
-#: web/src/views/Galaxy.tsx:461
+#: web/src/views/Galaxy.tsx:464
 msgid "Invalid seed."
 msgstr ""
 
-#: web/src/views/Galaxy.tsx:426
-#: web/src/views/Galaxy.tsx:473
+#: web/src/views/Galaxy.tsx:429
+#: web/src/views/Galaxy.tsx:476
 msgid "Invalid star index."
 msgstr ""
 
@@ -728,6 +736,10 @@ msgstr ""
 msgid "Pause"
 msgstr ""
 
+#: web/src/partials/GalaxyOverview.tsx:314
+msgid "Pause star animation"
+msgstr ""
+
 #: web/src/names.tsx:46
 msgid "Planet count"
 msgstr ""
@@ -791,9 +803,13 @@ msgstr ""
 msgid "Resource multiplier"
 msgstr ""
 
-#: web/src/partials/GalaxyOverview.tsx:250
+#: web/src/partials/GalaxyOverview.tsx:248
 #: web/src/partials/StarView.tsx:655
 msgid "Resources"
+msgstr ""
+
+#: web/src/partials/GalaxyOverview.tsx:320
+msgid "Respects reduced motion settings"
 msgstr ""
 
 #: web/src/views/FindGalaxy.tsx:540
@@ -861,7 +877,7 @@ msgstr ""
 
 #: web/src/exporter/workbookGenerator.worker.tsx:55
 #: web/src/exporter/workbookGenerator.worker.tsx:79
-#: web/src/partials/GalaxyOverview.tsx:216
+#: web/src/partials/GalaxyOverview.tsx:214
 #: web/src/views/Galaxy.tsx:64
 msgid "Seed"
 msgstr ""
@@ -879,7 +895,7 @@ msgstr ""
 msgid "Seed: "
 msgstr ""
 
-#: web/src/partials/GalaxyOverview.tsx:191
+#: web/src/partials/GalaxyOverview.tsx:301
 msgid "Select a star to view its planets"
 msgstr ""
 
@@ -917,12 +933,12 @@ msgstr ""
 msgid "Star Finder is no longer supported. Please use Galaxy Finder instead."
 msgstr ""
 
-#: web/src/partials/GalaxyOverview.tsx:224
+#: web/src/partials/GalaxyOverview.tsx:222
 msgid "Star types"
 msgstr ""
 
-#: web/src/partials/GalaxyOverview.tsx:188
-#: web/src/partials/Starmap.tsx:310
+#: web/src/partials/GalaxyOverview.tsx:298
+#: web/src/partials/Starmap.tsx:264
 #: web/src/views/Galaxy.tsx:360
 msgid "Starmap"
 msgstr ""
@@ -932,8 +948,17 @@ msgid "Start"
 msgstr ""
 
 #: web/src/names.tsx:38
-#: web/src/partials/GalaxyOverview.tsx:200
+#: web/src/partials/GalaxyOverview.tsx:343
 msgid "Starting system"
+msgstr ""
+
+#: web/src/partials/GalaxyOverview.tsx:330
+msgid "Static map"
+msgstr ""
+
+#: web/src/partials/GalaxyOverview.tsx:312
+#: web/src/partials/GalaxyOverview.tsx:319
+msgid "Static map: WebGL is unavailable"
 msgstr ""
 
 #: web/src/exporter/workbookGenerator.worker.tsx:20

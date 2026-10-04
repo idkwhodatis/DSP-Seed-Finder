@@ -1,6 +1,6 @@
 .root {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-columns: 300px minmax(0, 1fr);
     align-items: start;
     width: 100%;
     min-height: 100%;
@@ -82,6 +82,7 @@
     .map {
         height: clamp(320px, 55dvh, 560px);
         position: static;
+        order: -1;
     }
     .info {
         grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
@@ -105,4 +106,15 @@
     font-size: 12px;
     text-decoration: underline;
     text-underline-offset: 3px;
+}
+
+.motionButton {
+    flex: none;
+    height: 32px;
+    padding: 0 8px;
+    gap: 5px;
+    font-size: 13px;
+}
+.motionButton[aria-pressed="true"] {
+    border-color: color-mix(in srgb, var(--ring) 45%, var(--border));
 }
