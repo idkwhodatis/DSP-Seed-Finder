@@ -27,7 +27,7 @@ export default function Select<T>(props: {
                 aria-label={props["aria-label"]}
                 aria-invalid={props.error || undefined}
                 className={cn(
-                    "inline-flex h-8 min-w-0 items-center justify-between gap-2 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/30 disabled:opacity-50",
+                    "inline-flex h-8 min-w-0 items-center justify-between gap-1 whitespace-nowrap rounded-md border border-input bg-background px-1.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/30 disabled:opacity-50 [&>span:first-child]:min-w-0 [&>span:first-child]:truncate",
                     props.error && "border-destructive",
                     props.className,
                 )}
