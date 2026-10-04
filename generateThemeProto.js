@@ -48,11 +48,9 @@ function run() {
             mod_y: Vector2(${toDouble(x.ModY.x)}, ${toDouble(x.ModY.y)}),
         },`,
     )
-    // eslint-disable-next-line no-undef
     console.log(array.join("\n"))
 }
 
-/* eslint-disable */
 const themeProtoSet = {/** Copy ThemeProtoSet.json here */}
 
 run()

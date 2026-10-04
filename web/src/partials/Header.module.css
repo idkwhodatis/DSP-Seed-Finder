@@ -1,73 +1,86 @@
 .header {
-    position: sticky;
-    top: 0;
-    left: 0;
-    right: 0;
-    line-height: 2;
-    z-index: 20;
     display: flex;
     align-items: center;
-    flex: none;
-    background-color: var(--background);
+    gap: 20px;
+    min-height: 52px;
+    padding: 8px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
 }
-
 .title {
-    font-size: 22px;
-    font-weight: bold;
-    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    white-space: nowrap;
 }
-
 .buttons {
     display: flex;
-    flex: 1 1 0;
+    gap: 4px;
+    align-items: center;
+    flex: 1;
 }
-
 .button {
-    font-size: 16px;
-    padding: 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 9px;
+    border-radius: 5px;
+    font-size: 14px;
+    color: var(--muted-foreground);
+    white-space: nowrap;
 }
-
-.button:global(.active) {
-    font-weight: bold;
-    text-decoration: underline;
+.button:hover,
+.active {
+    background: var(--accent);
+    color: var(--foreground);
 }
-
+.button[aria-disabled="true"] {
+    opacity: 0.5;
+    cursor: default;
+}
 .legacy {
-    color: rgba(160, 160, 160, 0.8);
-    text-decoration: line-through;
+    font-size: 12px;
 }
-
-.legacy:global(.active) {
-    text-decoration: line-through;
-}
-
-.buttonsDisabled {
-    cursor: not-allowed;
-}
-
-.buttonsDisabled .button {
-    pointer-events: none;
-}
-
 .icons {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 6px;
 }
-
-.icon {
-    display: block;
-    padding: 8px;
-    line-height: 1;
-    font-size: 24px;
-    cursor: pointer;
-}
-
+.icon,
 .language {
-    display: block;
-    padding: 8px;
-    line-height: 1;
-    font-size: 16px;
-    cursor: pointer;
-    user-select: none;
+    height: 30px;
+    min-width: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+}
+.icon:hover,
+.language:hover {
+    background: var(--accent);
+}
+.language {
+    font-size: 14px;
+}
+@media (max-width: 760px) {
+    .header {
+        flex-wrap: wrap;
+        gap: 6px 12px;
+        padding: 8px 12px;
+    }
+    .title {
+        flex: 1;
+    }
+    .buttons {
+        order: 3;
+        flex-basis: 100%;
+        overflow-x: auto;
+    }
+    .button {
+        padding: 4px 8px;
+    }
+    .icons {
+        margin-left: auto;
+    }
 }

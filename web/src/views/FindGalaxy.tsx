@@ -1,17 +1,6 @@
-import { A, useNavigate, useParams } from "@solidjs/router"
-import {
-    Component,
-    createSignal,
-    Show,
-    Switch,
-    Match,
-    batch,
-    createMemo,
-    createEffect,
-    on,
-    Index,
-} from "solid-js"
-import { createStore, unwrap } from "solid-js/store"
+import { type FC, useEffect, useRef } from "react"
+import { Link, useNavigate, useParams } from "react-router-dom"
+import { useLiveState, useObjectState } from "../hooks/useLiveState"
 import {
     constructMultiRule,
     getDefaultParams,
@@ -47,11 +36,10 @@ import { useLingui } from "#lingui"
 import { DEFAULT_BATCH_SIZE } from "../constants"
 
 const PAGE_SIZE = 100
-
-const defaultProgress: () => MultiProfileProgress = () => ({
+const defaultProgress = (): MultiProfileProgress => ({
     id: "",
     params: getDefaultParams(),
-    concurrency: navigator.hardwareConcurrency,
+    concurrency: navigator.hardwareConcurrency || 1,
     autosave: 5,
     range: [0, 1e8],
     total: 0,
@@ -68,299 +56,427 @@ const defaultProgress: () => MultiProfileProgress = () => ({
         ],
     ],
 })
-
-const SearchResult: Component<{
+const SearchResult: FC<{
     id: string
     page: integer
     updateKey: number
     params: GameParameters
 }> = (props) => {
-    const [results, setResults] = createSignal<MultiProgressResult[]>([])
-    let isLoading = -1
-
-    const searchString = createMemo(() => getSearch(props.params))
-
-    function update() {
-        if (isLoading === props.page) return
-        const page = props.page
-        isLoading = page
-        console.debug("results loading")
-        getMultiProfileResult(props.id, (page - 1) * PAGE_SIZE, PAGE_SIZE).then(
-            (list) => {
-                console.debug("results loaded", list)
-                if (isLoading === page) {
-                    setResults(list)
-                    isLoading = -1
-                }
-            },
-        )
-    }
-
-    createEffect(update)
-
-    createEffect(
-        on(
-            () => props.updateKey,
-            () => {
-                if (results().length < PAGE_SIZE) {
-                    update()
-                }
-            },
-        ),
-    )
-
-    function buildUrl(item: MultiProgressResult) {
-        return `/galaxy/${item.seed}${searchString()}`
-    }
-
+    const [results, setResults] = useLiveState<MultiProgressResult[]>([])
+    useEffect(() => {
+        setResults([])
+    }, [props.id, props.page, setResults])
+    useEffect(() => {
+        let current = true
+        getMultiProfileResult(props.id, (props.page - 1) * PAGE_SIZE, PAGE_SIZE)
+            .then((list) => {
+                if (current) setResults(list)
+            })
+            .catch((error) => {
+                if (current) console.error(error)
+            })
+        return () => {
+            current = false
+        }
+    }, [props.id, props.page, props.updateKey, setResults])
     return (
-        <div class={styles.results}>
-            <Index each={results()}>
-                {(result) => (
-                    <A
-                        href={buildUrl(result())}
-                        target="_blank"
-                        class={styles.result}
-                    >
-                        {String(result().seed).padStart(8, "0")}
-                    </A>
-                )}
-            </Index>
+        <div className={styles.results}>
+            {results().map((result) => (
+                <Link
+                    key={result.seed}
+                    to={`/galaxy/${result.seed}${getSearch(props.params)}`}
+                    target="_blank"
+                    className={styles.result}
+                >
+                    {String(result.seed).padStart(8, "0")}
+                </Link>
+            ))}
         </div>
     )
 }
-
-const FindGalaxy: Component = () => {
+const FindGalaxy: FC = () => {
     const params = useParams()
     const navigate = useNavigate()
     const { t } = useLingui()
-    const [name, setName] = createSignal(t`Untitled`)
-    const [profile, setProfile] = createSignal<ProfileInfo | null>()
+    const [name, setName] = useLiveState(t`Untitled`)
+    const [profile, setProfile] = useLiveState<ProfileInfo | null>(null)
     const [progress, setProgress] =
-        createStore<MultiProfileProgress>(defaultProgress())
-    const [nativeMode, setNativeMode] = createSignal(false)
-    const [profileModal, setProfileModal] = createSignal(false)
-    const [exportModal, setExportModal] = createSignal(false)
+        useObjectState<MultiProfileProgress>(defaultProgress())
+    const [nativeMode, setNativeMode] = useLiveState(false)
+    const [profileModal, setProfileModal] = useLiveState(false)
+    const [exportModal, setExportModal] = useLiveState(false)
     const [store, setStore] = useStore()
-    const [currentPage, setCurrentPage] = createSignal(1)
-    const [tick, setTick] = createSignal(0)
+    const [currentPage, setCurrentPage] = useLiveState(1)
+    const [tick, setTick] = useLiveState(0)
+    const [busy, setBusy] = useLiveState(false)
+    const [loading, setLoading] = useLiveState(false)
+    const [error, setError] = useLiveState("")
+    const mounted = useRef(false)
+    const profileVersion = useRef(0)
+    const run = useRef<{
+        nativeMode: boolean
+        started: boolean
+        stopRequested: boolean
+    } | null>(null)
     const isLoaded = () => !!profile()
     const hasProgress = () => progress.nextBatchId > 0
-    const isDisabled = () => store.searching || hasProgress()
+    const isBusy = () => store.searching || busy() || loading()
+    const isDisabled = () => isBusy() || hasProgress()
     const hasCompleted = () => {
-        const totalBatchCount = Math.ceil(progress.total / progress.batchSize)
-        return totalBatchCount > 0 && progress.nextBatchId >= totalBatchCount
+        const batches = Math.ceil(progress.total / progress.batchSize)
+        return batches > 0 && progress.nextBatchId >= batches
     }
-
-    function changeProfile(profile: ProfileInfo | null) {
-        batch(() => {
-            if (profile) {
-                navigate(`/find-galaxy/${profile.id}`)
-                setProfile(profile)
-                setName(profile.name)
-            } else {
-                navigate(`/find-galaxy`)
-                setProfile(null)
-                setName("")
-            }
-        })
+    function reportError(reason: unknown) {
+        console.error(reason)
+        if (mounted.current)
+            setError(t`Unable to complete the operation. Please try again.`)
     }
-
-    async function onSelectProfile(profile: ProfileInfo) {
-        const progress = await getMultiProfileProgress(profile.id)
-        if (progress) {
-            console.debug(progress)
-            batch(() => {
-                changeProfile(profile)
-                setProgress(progress)
+    function changeProfile(next: ProfileInfo | null) {
+        ++profileVersion.current
+        if (profile()?.id !== next?.id) setCurrentPage(1)
+        setExportModal(false)
+        setProfile(next)
+        setName(next?.name ?? "")
+        if (params.profileId !== next?.id)
+            navigate(next ? `/find-galaxy/${next.id}` : "/find-galaxy")
+    }
+    async function onSelectProfile(next: ProfileInfo) {
+        if (isBusy()) return
+        const version = ++profileVersion.current
+        setBusy(true)
+        setError("")
+        try {
+            const saved = await getMultiProfileProgress(next.id)
+            if (
+                mounted.current &&
+                version === profileVersion.current &&
+                saved?.id === next.id
+            ) {
+                setProgress({ ...defaultProgress(), ...saved })
+                changeProfile(next)
+                setTick((value) => value + 1)
                 setProfileModal(false)
-            })
+            }
+        } catch (reason) {
+            if (version === profileVersion.current) reportError(reason)
+        } finally {
+            if (mounted.current) setBusy(false)
         }
     }
-
     function onNewProfile() {
-        batch(() => {
-            setProgress(defaultProgress())
-            changeProfile(null)
-        })
+        if (isBusy()) return
+        setProgress(defaultProgress())
+        changeProfile(null)
+        setError("")
     }
-
     function onCloneProfile() {
-        batch(() => {
-            const origName = name()
-            changeProfile(null)
-            setName(origName + t` - Copy`)
-            setProgress({
-                id: "",
-                batchSize: DEFAULT_BATCH_SIZE,
-                nextBatchId: 0,
-                found: 0,
-            })
+        if (isBusy()) return
+        const originalName = name()
+        changeProfile(null)
+        setName(originalName + t` - Copy`)
+        setProgress({
+            id: "",
+            total: 0,
+            batchSize: DEFAULT_BATCH_SIZE,
+            nextBatchId: 0,
+            found: 0,
         })
+        setError("")
     }
-
-    const isRuleValid = createMemo(() => validateMultiRule(progress.multiRules))
-
-    function isValid(): boolean {
+    function isValid() {
         if (
-            name() === "" ||
+            !name().trim() ||
+            !Number.isInteger(progress.params.starCount) ||
             progress.params.starCount < minStarCount ||
             progress.params.starCount > maxStarCount ||
             !Number.isInteger(progress.concurrency) ||
             progress.concurrency < 1 ||
+            !Number.isFinite(progress.autosave) ||
             progress.autosave <= 0
-        ) {
+        )
             return false
-        }
         if (Array.isArray(progress.range)) {
             if (
+                !progress.range.every(Number.isInteger) ||
                 progress.range[0] < 0 ||
                 progress.range[1] > 1e8 ||
                 progress.range[0] >= progress.range[1]
-            ) {
+            )
                 return false
-            }
-        }
-        return isRuleValid()
+        } else if (progress.range.length === 0) return false
+        return validateMultiRule(progress.multiRules)
     }
-
+    // The live state view is a Proxy; IndexedDB must receive a plain snapshot.
+    async function saveProfile() {
+        const version = profileVersion.current
+        const existing = profile()
+        const next: ProfileInfo = {
+            id: existing?.id ?? generateProfileId(),
+            name: name(),
+            createdAt: existing?.createdAt ?? Date.now(),
+        }
+        const snapshot: MultiProfileProgress = { ...progress, id: next.id }
+        if (!existing || existing.name !== next.name)
+            await setMultiProfileInfo(next)
+        await setMultiProfileProgress(snapshot)
+        if (!mounted.current || version !== profileVersion.current) return null
+        setProgress(snapshot)
+        changeProfile(next)
+        return snapshot
+    }
     async function onSaveProfile() {
-        const existingProfile = profile()
-        if (existingProfile) {
-            await setMultiProfileProgress(unwrap(progress))
-            if (existingProfile.name !== name()) {
-                const newProfile: ProfileInfo = {
-                    ...existingProfile,
-                    name: name(),
-                }
-                await setMultiProfileInfo(newProfile)
-                changeProfile(newProfile)
-            }
-        } else {
-            const id = generateProfileId()
-            const newProfile: ProfileInfo = {
-                id,
-                name: name(),
-                createdAt: Date.now(),
-            }
-            await setMultiProfileInfo(newProfile)
-            const newProgress: MultiProfileProgress = {
-                ...unwrap(progress),
-                id,
-            }
-            await setMultiProfileProgress(newProgress)
-            batch(() => {
-                setProgress(newProgress)
-                changeProfile(newProfile)
-            })
-            return
+        if (isBusy() || !isValid()) return
+        setBusy(true)
+        setError("")
+        try {
+            await saveProfile()
+        } catch (reason) {
+            reportError(reason)
+        } finally {
+            if (mounted.current) setBusy(false)
         }
     }
-
     async function onClearProfile() {
-        const existingProfile = profile()
-        if (existingProfile) {
-            await clearMultiProfile(existingProfile.id)
+        if (isBusy()) return
+        setBusy(true)
+        setError("")
+        const version = profileVersion.current
+        const snapshot = {
+            ...progress,
+            found: 0,
+            nextBatchId: 0,
+            total: 0,
+            batchSize: DEFAULT_BATCH_SIZE,
         }
-        batch(() => {
-            setCurrentPage(1)
-            setProgress({
-                found: 0,
-                nextBatchId: 0,
-                batchSize: DEFAULT_BATCH_SIZE,
-            })
-        })
+        try {
+            const existing = profile()
+            if (existing) {
+                await clearMultiProfile(existing.id)
+                await setMultiProfileProgress(snapshot)
+            }
+            if (mounted.current && version === profileVersion.current) {
+                setCurrentPage(1)
+                setProgress(snapshot)
+            }
+        } catch (reason) {
+            reportError(reason)
+        } finally {
+            if (mounted.current) setBusy(false)
+        }
     }
-
     async function onDeleteProfile() {
-        const existingProfile = profile()
-        if (existingProfile) {
-            await deleteMultiProfile(existingProfile.id)
+        if (isBusy()) return
+        setBusy(true)
+        setError("")
+        const version = profileVersion.current
+        try {
+            const existing = profile()
+            if (existing) await deleteMultiProfile(existing.id)
+            if (mounted.current && version === profileVersion.current) {
+                setProgress(defaultProgress())
+                changeProfile(null)
+            }
+        } catch (reason) {
+            reportError(reason)
+        } finally {
+            if (mounted.current) setBusy(false)
         }
-        batch(() => {
-            onNewProfile()
-        })
     }
-
     async function onStartSearching() {
-        await onSaveProfile()
+        if (run.current || isBusy() || !isValid()) return
+        // Lock synchronously before saving so rapid clicks cannot create two searches.
+        const session = {
+            nativeMode: nativeMode(),
+            started: false,
+            stopRequested: false,
+        }
+        run.current = session
         setStore("searching", true)
-        let results: integer[] = []
-        setProgress({
-            total: Array.isArray(progress.range)
+        setError("")
+        setProgress(
+            "total",
+            Array.isArray(progress.range)
                 ? progress.range[1] - progress.range[0]
                 : progress.range.length,
-        })
-        startSearchingGalaxies(nativeMode(), {
-            batchSize: progress.batchSize,
-            nextBatchId: progress.nextBatchId,
-            gameDesc: progress.params,
-            range: progress.range,
-            concurrency: progress.concurrency,
-            autosave: progress.autosave,
-            rule: constructMultiRule(unwrap(progress.multiRules)),
-            onResult: (result) => {
-                console.debug("result", result)
-                results.push(...result)
-            },
-            onProgress: (nextBatchId) => {
-                batch(() => {
-                    setProgress("nextBatchId", (c) => Math.max(c, nextBatchId))
-                    setProgress("found", (found) => found + results.length)
-                })
-                setMultiProfileProgress(unwrap(progress), results).then(() => {
-                    setTick((prev) => (prev + 1) % 1024)
-                })
-                results = []
-            },
-            onError: (err) => {
-                console.error(err)
+        )
+        let writes = Promise.resolve()
+        let settled = false
+        let failed = false
+        let saved: MultiProfileProgress | null = null
+        const finish = () => {
+            if (settled) return
+            settled = true
+            void writes.finally(() => {
+                if (run.current !== session) return
+                run.current = null
                 setStore("searching", false)
-            },
-            onComplete: () => {
-                console.debug("done")
-                setStore("searching", false)
-            },
-            onInterrupt: () => {
-                console.debug("interrupt")
-                setStore("searching", false)
-            },
-        })
-    }
-
-    function onStopSearching() {
-        stopSearchingGalaxies(nativeMode())
-    }
-
-    createEffect(
-        on(
-            () => params.profileId,
-            (profileId) => {
-                if (profileId) {
-                    if (profile()?.id !== profileId) {
-                        Promise.all([
-                            getMultiProfileInfo(profileId),
-                            getMultiProfileProgress(profileId),
-                        ]).then(([info, progress]): void => {
-                            if (info && info.id === profileId) {
-                                batch(() => {
-                                    setName(info.name)
-                                    setProfile(info)
-                                    setName(info.name)
-                                    if (progress && progress.id === profileId) {
-                                        setProgress(progress)
-                                    }
-                                })
-                            }
-                        })
+                if (
+                    failed &&
+                    saved &&
+                    mounted.current &&
+                    profile()?.id === saved.id
+                )
+                    setProgress(saved)
+            })
+        }
+        try {
+            const initial = await saveProfile()
+            if (!initial || session.stopRequested || !mounted.current) {
+                finish()
+                return
+            }
+            saved = initial
+            let snapshot = initial
+            let results: integer[] = []
+            session.started = true
+            startSearchingGalaxies(session.nativeMode, {
+                batchSize: snapshot.batchSize,
+                nextBatchId: snapshot.nextBatchId,
+                gameDesc: snapshot.params,
+                range: snapshot.range,
+                concurrency: snapshot.concurrency,
+                autosave: snapshot.autosave,
+                rule: constructMultiRule(snapshot.multiRules),
+                onResult: (result) => {
+                    if (!settled) results.push(...result)
+                },
+                onProgress: (nextBatchId) => {
+                    if (settled || failed) return
+                    const batchResults = results
+                    results = []
+                    snapshot = {
+                        ...snapshot,
+                        nextBatchId: Math.max(
+                            snapshot.nextBatchId,
+                            nextBatchId,
+                        ),
+                        found: snapshot.found + batchResults.length,
                     }
+                    const checkpoint = snapshot
+                    if (mounted.current && profile()?.id === checkpoint.id)
+                        setProgress(checkpoint)
+                    // Serialize immutable checkpoints, keeping the cursor and results atomic.
+                    writes = writes
+                        .then(async () => {
+                            if (failed) return
+                            await setMultiProfileProgress(
+                                checkpoint,
+                                batchResults,
+                            )
+                            saved = checkpoint
+                            if (
+                                mounted.current &&
+                                profile()?.id === checkpoint.id
+                            )
+                                setTick((value) => value + 1)
+                        })
+                        .catch((reason) => {
+                            failed = true
+                            reportError(reason)
+                            stopSearchingGalaxies(session.nativeMode)
+                        })
+                },
+                onError: (reason) => {
+                    if (settled) return
+                    reportError(reason)
+                    stopSearchingGalaxies(session.nativeMode)
+                    finish()
+                },
+                onComplete: finish,
+                onInterrupt: finish,
+            })
+        } catch (reason) {
+            reportError(reason)
+            finish()
+        }
+    }
+    function onStopSearching() {
+        const session = run.current
+        if (!session) return
+        session.stopRequested = true
+        if (session.started) stopSearchingGalaxies(session.nativeMode)
+    }
+    useEffect(() => {
+        mounted.current = true
+        return () => {
+            mounted.current = false
+            ++profileVersion.current
+            const session = run.current
+            if (session) {
+                session.stopRequested = true
+                if (session.started) stopSearchingGalaxies(session.nativeMode)
+            }
+        }
+    }, [])
+    useEffect(() => {
+        const profileId = params.profileId
+        // Saving can navigate to the profile already in memory. That route commit
+        // must not invalidate a Start/Resume save which is already in flight.
+        if (profileId === profile()?.id || (!profileId && !profile())) return
+        const version = ++profileVersion.current
+        let current = true
+        const session = run.current
+        if (session) {
+            session.stopRequested = true
+            if (session.started) stopSearchingGalaxies(session.nativeMode)
+        }
+        setCurrentPage(1)
+        setExportModal(false)
+        setProfileModal(false)
+        setError("")
+        if (!profileId) {
+            setProfile(null)
+            setName(t`Untitled`)
+            setProgress(defaultProgress())
+            setLoading(false)
+            return
+        }
+        setLoading(true)
+        setProfile(null)
+        setProgress(defaultProgress())
+        Promise.all([
+            getMultiProfileInfo(profileId),
+            getMultiProfileProgress(profileId),
+        ])
+            .then(([info, saved]) => {
+                if (!current || version !== profileVersion.current) return
+                if (info?.id === profileId) {
+                    setProfile(info)
+                    setName(info.name)
+                    setProgress({
+                        ...defaultProgress(),
+                        ...(saved?.id === profileId
+                            ? saved
+                            : { id: profileId }),
+                    })
                 }
-            },
-        ),
-    )
-
+            })
+            .catch((reason) => {
+                if (current && version === profileVersion.current)
+                    reportError(reason)
+            })
+            .finally(() => {
+                if (current && version === profileVersion.current)
+                    setLoading(false)
+            })
+        return () => {
+            current = false
+        }
+    }, [
+        params.profileId,
+        profile,
+        setCurrentPage,
+        setError,
+        setExportModal,
+        setLoading,
+        setName,
+        setProfile,
+        setProfileModal,
+        setProgress,
+    ])
     return (
-        <div class={styles.content}>
+        <div className={styles.content}>
+            {error() && <div role="alert">{error()}</div>}
             <ProfileManager
                 onLoad={() => setProfileModal(true)}
                 onSave={onSaveProfile}
@@ -368,7 +484,7 @@ const FindGalaxy: Component = () => {
                 onClone={onCloneProfile}
                 onClear={onClearProfile}
                 onDelete={onDeleteProfile}
-                disabled={store.searching}
+                disabled={isBusy()}
                 isValid={isValid()}
                 isLoaded={isLoaded()}
             />
@@ -380,71 +496,71 @@ const FindGalaxy: Component = () => {
                 nativeMode={nativeMode()}
                 onNativeModeChange={setNativeMode}
                 isLoaded={isLoaded()}
-                searching={store.searching}
+                searching={isBusy()}
             />
-            <div class={styles.rules}>{t`Rules`}</div>
+            <div className={styles.rules}>{t`Rules`}</div>
             <MultiRuleEditor
                 value={progress.multiRules}
                 onChange={(multiRules) => setProgress("multiRules", multiRules)}
                 disabled={isDisabled()}
             />
-            <div class={styles.execute}>
-                <div class={styles.progress}>
-                    <Show
-                        when={
-                            store.searching ||
-                            (hasProgress() && !hasCompleted())
-                        }
-                    >
-                        <div class={styles.progressText}>{t`Progress:`}</div>
-                        <ProgressBar
-                            class={styles.progressBar}
-                            current={progress.nextBatchId * progress.batchSize}
-                            total={progress.total}
-                        />
-                    </Show>
+            <div className={styles.execute}>
+                <div className={styles.progress}>
+                    {store.searching || (hasProgress() && !hasCompleted()) ? (
+                        <>
+                            <div
+                                className={styles.progressText}
+                            >{t`Progress:`}</div>
+                            <ProgressBar
+                                className={styles.progressBar}
+                                current={
+                                    progress.nextBatchId * progress.batchSize
+                                }
+                                total={progress.total}
+                            />
+                        </>
+                    ) : null}
                 </div>
-                <Show when={hasProgress()}>
-                    <Button
-                        onClick={() => setExportModal(true)}
-                    >{t`Export`}</Button>
-                </Show>
-                <Switch
-                    fallback={
+                {hasProgress() && profile() ? (
+                    <>
                         <Button
-                            disabled={!isValid()}
-                            onClick={onStartSearching}
-                        >
-                            {hasProgress() ? t`Resume` : t`Start`}
-                        </Button>
-                    }
-                >
-                    <Match when={store.searching}>
-                        <Button onClick={onStopSearching}>{t`Pause`}</Button>
-                    </Match>
-                    <Match when={hasCompleted()}>
-                        <span class={styles.completed}>{t`Completed!`}</span>
-                    </Match>
-                </Switch>
+                            onClick={() => setExportModal(true)}
+                        >{t`Export`}</Button>
+                    </>
+                ) : null}
+                {store.searching ? (
+                    <Button onClick={onStopSearching}>{t`Pause`}</Button>
+                ) : hasCompleted() ? (
+                    <span className={styles.completed}>{t`Completed!`}</span>
+                ) : (
+                    <Button
+                        disabled={isBusy() || !isValid()}
+                        onClick={onStartSearching}
+                    >
+                        {hasProgress() ? t`Resume` : t`Start`}
+                    </Button>
+                )}
             </div>
-            <Show when={hasProgress()}>
-                <Pagination
-                    current={currentPage()}
-                    total={
-                        Math.max(
-                            0,
-                            Math.floor((progress.found - 1) / PAGE_SIZE),
-                        ) + 1
-                    }
-                    onChange={setCurrentPage}
-                />
-                <SearchResult
-                    id={profile()!.id}
-                    page={currentPage()}
-                    updateKey={tick()}
-                    params={progress.params}
-                />
-            </Show>
+            {hasProgress() && profile() ? (
+                <>
+                    <Pagination
+                        current={currentPage()}
+                        total={
+                            Math.max(
+                                0,
+                                Math.floor((progress.found - 1) / PAGE_SIZE),
+                            ) + 1
+                        }
+                        onChange={setCurrentPage}
+                    />
+                    <SearchResult
+                        id={profile()!.id}
+                        page={currentPage()}
+                        updateKey={tick()}
+                        params={progress.params}
+                    />
+                </>
+            ) : null}
             <ProfilesModal
                 visible={profileModal()}
                 onClose={() => setProfileModal(false)}

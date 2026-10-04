@@ -1,0 +1,151 @@
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { MemoryRouter, useLocation } from "react-router-dom"
+import { computePosition } from "@floating-ui/dom"
+import Starmap from "./Starmap"
+import { StarType } from "../enums"
+
+vi.mock("@floating-ui/dom", () => ({ computePosition: vi.fn(), flip: vi.fn() }))
+afterEach(cleanup)
+beforeEach(() => {
+    vi.mocked(computePosition).mockReset()
+})
+
+const star = {
+    index: 0,
+    name: "Alpha",
+    position: [0, 0, 0],
+    type: StarType.MainSeqStar,
+    color: 0.5,
+} as Star
+const galaxy: Galaxy = { seed: 0, stars: [star] }
+const position: Awaited<ReturnType<typeof computePosition>> = {
+    x: 12,
+    y: 34,
+    placement: "top",
+    strategy: "fixed",
+    middlewareData: {},
+}
+function deferred<T>() {
+    let resolve!: (value: T) => void
+    const promise = new Promise<T>((yes) => {
+        resolve = yes
+    })
+    return { promise, resolve }
+}
+function Location() {
+    const location = useLocation()
+    return (
+        <output data-testid="location">
+            {location.pathname}
+            {location.search}
+        </output>
+    )
+}
+function content(value: Galaxy = galaxy) {
+    return (
+        <MemoryRouter initialEntries={["/galaxy/0"]}>
+            <Starmap galaxy={value} search="?count=32" />
+            <Location />
+        </MemoryRouter>
+    )
+}
+
+describe("starmap lifecycle and keyboard access", () => {
+    it.each(["Enter", " "])(
+        "navigates a focused star with %s and preserves query parameters",
+        (key) => {
+            vi.mocked(computePosition).mockResolvedValue(position)
+            render(content())
+            const node = screen.getByRole("link", { name: "Alpha, #1" })
+            expect(node).toHaveAttribute("tabindex", "0")
+            fireEvent.keyDown(node, { key })
+            expect(screen.getByTestId("location")).toHaveTextContent(
+                "/galaxy/0/0?count=32",
+            )
+        },
+    )
+
+    it("positions the popup only after both mounted refs are available", async () => {
+        vi.mocked(computePosition).mockResolvedValue(position)
+        render(content())
+        fireEvent.focus(screen.getByRole("link", { name: "Alpha, #1" }))
+        await act(async () => {})
+        const popup = screen.getByRole("link", { name: "Alpha" })
+        expect(computePosition).toHaveBeenCalledWith(
+            expect.any(SVGElement),
+            popup,
+            expect.objectContaining({ strategy: "fixed" }),
+        )
+        expect(popup).toHaveStyle({
+            left: "12px",
+            top: "34px",
+            visibility: "visible",
+        })
+        fireEvent.keyDown(screen.getByRole("link", { name: "Alpha, #1" }), {
+            key: "Escape",
+        })
+        expect(popup).toHaveStyle({ display: "none" })
+    })
+
+    it("does not mutate a detached popup when positioning resolves after unmount", async () => {
+        const pending = deferred<typeof position>()
+        vi.mocked(computePosition).mockReturnValue(pending.promise)
+        const { unmount } = render(content())
+        fireEvent.mouseEnter(screen.getByRole("link", { name: "Alpha, #1" }))
+        const popup = document.querySelector<HTMLAnchorElement>(
+            "a[href='/galaxy/0/0?count=32']",
+        )!
+        unmount()
+        await act(async () => {
+            pending.resolve(position)
+        })
+        expect(popup.style.left).toBe("")
+        expect(popup.isConnected).toBe(false)
+        fireEvent.resize(window)
+        expect(computePosition).toHaveBeenCalledTimes(1)
+    })
+
+    it("ignores an older placement across close and reopen", async () => {
+        const old = deferred<typeof position>(),
+            current = deferred<typeof position>()
+        vi.mocked(computePosition)
+            .mockReturnValueOnce(old.promise)
+            .mockReturnValueOnce(current.promise)
+        render(content())
+        const node = screen.getByRole("link", { name: "Alpha, #1" })
+        fireEvent.mouseEnter(node)
+        fireEvent.mouseLeave(node)
+        fireEvent.mouseEnter(node)
+        await act(async () => {
+            current.resolve(position)
+        })
+        const popup = screen.getByRole("link", { name: "Alpha" })
+        await act(async () => {
+            old.resolve({ ...position, x: 90, y: 90 })
+        })
+        expect(popup).toHaveStyle({ left: "12px", top: "34px" })
+    })
+
+    it("handles a failed placement without preventing navigation", async () => {
+        vi.mocked(computePosition).mockRejectedValue(
+            new Error("layout unavailable"),
+        )
+        render(content())
+        const node = screen.getByRole("link", { name: "Alpha, #1" })
+        fireEvent.mouseEnter(node)
+        await act(async () => {})
+        fireEvent.click(node)
+        expect(screen.getByTestId("location")).toHaveTextContent(
+            "/galaxy/0/0?count=32",
+        )
+    })
+
+    it("uses a finite viewport for an empty galaxy", () => {
+        const { container } = render(content({ seed: 0, stars: [] }))
+        expect(container.querySelector("svg")).toHaveAttribute(
+            "viewBox",
+            "-2 -2 4 4",
+        )
+    })
+})

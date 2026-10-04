@@ -15,80 +15,52 @@ function* generateBatchFromRange(
     nextBatchId: integer,
     range: InternalFindOptions["range"],
 ): Generator<Batch, void, void> {
-    if (Array.isArray(range)) {
-        let current = range[0] + batchSize * nextBatchId
-        const end = range[1]
-        while (current < end) {
-            const next = Math.min(current + batchSize, end)
-            const seeds = Array.from({ length: next - current }).map(
-                (_, i) => current + i,
-            )
-            yield { id: nextBatchId++, seeds }
-            current = next
-        }
-    } else {
-        let current = batchSize * nextBatchId
-        const end = range.length
-        while (current < end) {
-            const next = Math.min(current + batchSize, end)
-            const seeds = Array.from(range.slice(current, next))
-            yield { id: nextBatchId++, seeds }
-            current = next
-        }
+    const start = Array.isArray(range) ? range[0] : 0
+    const end = Array.isArray(range) ? range[1] : range.length
+    for (
+        let current = start + batchSize * nextBatchId;
+        current < end;
+        current += batchSize
+    ) {
+        const next = Math.min(current + batchSize, end)
+        const seeds = Array.isArray(range)
+            ? Array.from({ length: next - current }, (_, i) => current + i)
+            : Array.from(range.slice(current, next))
+        yield { id: nextBatchId++, seeds }
+    }
+}
+
+async function request<T>(type: string, input: unknown): Promise<T> {
+    const worker = new WorldgenWorker()
+    try {
+        return await new Promise<T>((resolve, reject) => {
+            worker.addEventListener("error", reject, { once: true })
+            worker.addEventListener("messageerror", reject, { once: true })
+            worker.addEventListener("message", (event) => {
+                if (event.data.type === "error")
+                    reject(new Error(String(event.data.error)))
+                else if (event.data.type === type) resolve(event.data.data)
+            })
+            worker.postMessage({ type, input })
+        })
+    } finally {
+        worker.terminate()
     }
 }
 
 export class WorldGenBrowser implements WorldGen {
-    private stopped = false
+    private activeRun: { stopped: boolean } | null = null
 
-    async generate(seed: integer, gameDesc: GameParameters): Promise<Galaxy> {
-        const worker = new WorldgenWorker()
-        try {
-            const result = await new Promise<Galaxy>((resolve) => {
-                const eventHandler = (ev: MessageEvent) => {
-                    const message = ev.data
-                    if (message.type === TYPE_GENERATE) {
-                        worker.removeEventListener("message", eventHandler)
-                        resolve(message.data)
-                    }
-                }
-                worker.addEventListener("message", eventHandler)
-                worker.postMessage({
-                    type: TYPE_GENERATE,
-                    input: { seed, gameDesc },
-                })
-            })
-            return result
-        } finally {
-            worker.terminate()
-        }
+    generate(seed: integer, gameDesc: GameParameters): Promise<Galaxy> {
+        return request(TYPE_GENERATE, { seed, gameDesc })
     }
 
-    async searchStar(
+    searchStar(
         seed: integer,
         gameDesc: GameParameters,
         rule: Rule,
     ): Promise<integer[]> {
-        const worker = new WorldgenWorker()
-        try {
-            const result = await new Promise<integer[]>((resolve) => {
-                const eventHandler = (ev: MessageEvent) => {
-                    const message = ev.data
-                    if (message.type === TYPE_SEARCH_STAR) {
-                        worker.removeEventListener("message", eventHandler)
-                        resolve(message.data)
-                    }
-                }
-                worker.addEventListener("message", eventHandler)
-                worker.postMessage({
-                    type: TYPE_SEARCH_STAR,
-                    input: { seed, gameDesc, rule },
-                })
-            })
-            return result
-        } finally {
-            worker.terminate()
-        }
+        return request(TYPE_SEARCH_STAR, { seed, gameDesc, rule })
     }
 
     async find({
@@ -100,60 +72,91 @@ export class WorldGenBrowser implements WorldGen {
         concurrency,
         onBatchResult,
     }: InternalFindOptions) {
-        this.stopped = false
+        if (
+            !Number.isInteger(batchSize) ||
+            batchSize < 1 ||
+            !Number.isInteger(concurrency) ||
+            concurrency < 1
+        )
+            throw new Error("Invalid search batch size or concurrency")
+        if (this.activeRun) this.activeRun.stopped = true
+        const session = { stopped: false }
+        this.activeRun = session
+        const workers = new Set<Worker>()
         const batch = generateBatchFromRange(batchSize, nextBatchId, range)
-
+        let failed = false
         const run = (worker: Worker) => {
+            workers.add(worker)
             let currentBatch = batch.next()
             if (currentBatch.done) {
                 worker.terminate()
-                return
+                return Promise.resolve()
             }
-            let resolved = () => {}
-            const promise = new Promise<void>((resolve) => {
-                resolved = resolve
-            })
-            worker.addEventListener("message", (ev) => {
-                const message = ev.data
-                if (message.type === TYPE_FIND) {
-                    const result: integer[] = message.data
-                    onBatchResult(currentBatch.value!.id, result)
-                    if (this.stopped) {
-                        worker.terminate()
-                        resolved()
-                    } else {
+            return new Promise<void>((resolve, reject) => {
+                let ended = false
+                const fail = (error: unknown) => {
+                    if (!ended) {
+                        ended = true
+                        failed = true
+                        reject(error)
+                    }
+                }
+                const finish = () => {
+                    ended = true
+                    worker.terminate()
+                    resolve()
+                }
+                worker.addEventListener("error", fail, { once: true })
+                worker.addEventListener("messageerror", fail, { once: true })
+                worker.addEventListener("message", (event) => {
+                    if (ended || failed) return
+                    if (event.data.type === "error") {
+                        fail(new Error(String(event.data.error)))
+                        return
+                    }
+                    if (event.data.type !== TYPE_FIND) return
+                    try {
+                        onBatchResult(currentBatch.value!.id, event.data.data)
+                        if (session.stopped) {
+                            finish()
+                            return
+                        }
                         currentBatch = batch.next()
-                        if (currentBatch.done) {
-                            worker.terminate()
-                            resolved()
-                        } else {
+                        if (currentBatch.done) finish()
+                        else
                             worker.postMessage({
                                 type: TYPE_NEXT,
                                 input: currentBatch.value.seeds,
                             })
-                        }
+                    } catch (error) {
+                        fail(error)
                     }
-                }
+                })
+                worker.postMessage({
+                    type: TYPE_FIND,
+                    input: {
+                        game: gameDesc,
+                        rule,
+                        seeds: currentBatch.value!.seeds,
+                    },
+                })
             })
-            worker.postMessage({
-                type: TYPE_FIND,
-                input: {
-                    game: gameDesc,
-                    rule,
-                    seeds: currentBatch.value.seeds,
-                },
-            })
-            return promise
         }
-
-        await Promise.all(
-            Array.from({ length: concurrency }).map(() =>
-                run(new WorldgenWorker()),
-            ),
-        )
+        try {
+            await Promise.all(
+                Array.from({ length: concurrency }, () =>
+                    run(new WorldgenWorker()),
+                ),
+            )
+        } finally {
+            session.stopped = true
+            failed = true
+            workers.forEach((worker) => worker.terminate())
+            if (this.activeRun === session) this.activeRun = null
+        }
     }
 
     stop() {
-        this.stopped = true
+        if (this.activeRun) this.activeRun.stopped = true
     }
 }

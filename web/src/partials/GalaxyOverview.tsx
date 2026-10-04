@@ -1,6 +1,7 @@
+import GameIcon from "../components/GameIcon"
 import styles from "~styles"
 import Starmap from "./Starmap"
-import { Component, createMemo, For, Show } from "solid-js"
+import { type FC, Fragment } from "react"
 import { useLingui } from "#lingui"
 import { useStarTypeFullName, useVeinNames, useGasTypeNames } from "../names"
 import {
@@ -12,7 +13,6 @@ import {
 } from "../util"
 import { VeinType, GasType, StarType, SpectrType } from "../enums"
 import Tooltip from "../components/Tooltip"
-
 function combineAllVeins(stars: Star[]): VeinStat[] {
     const veins: Record<VeinType, VeinStat> = {} as any
     for (const star of stars) {
@@ -26,7 +26,9 @@ function combineAllVeins(stars: Star[]): VeinStat[] {
                         existing.max += stat.max
                         existing.avg += stat.avg
                     } else {
-                        veins[vein.veinType] = { ...stat }
+                        veins[vein.veinType] = {
+                            ...stat,
+                        }
                     }
                 }
             } else {
@@ -48,7 +50,6 @@ function combineAllVeins(stars: Star[]): VeinStat[] {
     }
     return veinOrder.map((type) => veins[type]).filter((x) => x)
 }
-
 function combineAllGases(stars: Star[]): Gas[] {
     const gases: Record<GasType, float> = {} as any
     for (const star of stars) {
@@ -62,7 +63,6 @@ function combineAllGases(stars: Star[]): Gas[] {
         .filter((type) => gases[type])
         .map((type) => [type, gases[type]])
 }
-
 function formatVein(amount: number, isOil: boolean): string {
     if (isOil) {
         return formatNumber(amount * 4e-5, 2) + " /s"
@@ -70,10 +70,9 @@ function formatVein(amount: number, isOil: boolean): string {
         return toPrecision(amount, 0)
     }
 }
-
-const Vein: Component<{
+const Vein: FC<{
     stat: VeinStat
-    class?: string
+    className?: string
 }> = (props) => {
     const isOil = () => props.stat.veinType === VeinType.Oil
     const avg = () => formatVein(props.stat.avg, isOil())
@@ -81,41 +80,86 @@ const Vein: Component<{
     const max = () => formatVein(props.stat.max, isOil())
     const { t } = useLingui()
     return (
-        <div class={props.class}>
-            <Show when={props.stat.min !== props.stat.max} fallback={avg()}>
-                ~{" "}
-                <Tooltip text={t`Estimated:\n${min()} - ${max()}`}>
-                    {avg()}
-                </Tooltip>
-            </Show>
+        <div className={props.className}>
+            {props.stat.min !== props.stat.max ? (
+                <>
+                    ~{" "}
+                    <Tooltip text={t`Estimated:\n${min()} - ${max()}`}>
+                        {avg()}
+                    </Tooltip>
+                </>
+            ) : (
+                avg()
+            )}
         </div>
     )
 }
-
-const GalaxyOverview: Component<{ galaxy: Galaxy; search: string }> = (
-    props,
-) => {
+const GalaxyOverview: FC<{
+    galaxy: Galaxy
+    search: string
+}> = (props) => {
     const { t } = useLingui()
     const getStarType = useStarTypeFullName()
     const veinNames = useVeinNames()
     const gasTypeNames = useGasTypeNames()
-
-    const starTypeCounts = createMemo(() => {
+    const starTypeCounts = () => {
         const order = [
-            getStarType({ type: StarType.MainSeqStar, spectr: SpectrType.M }),
-            getStarType({ type: StarType.MainSeqStar, spectr: SpectrType.K }),
-            getStarType({ type: StarType.MainSeqStar, spectr: SpectrType.G }),
-            getStarType({ type: StarType.MainSeqStar, spectr: SpectrType.F }),
-            getStarType({ type: StarType.MainSeqStar, spectr: SpectrType.A }),
-            getStarType({ type: StarType.MainSeqStar, spectr: SpectrType.B }),
-            getStarType({ type: StarType.MainSeqStar, spectr: SpectrType.O }),
-            getStarType({ type: StarType.GiantStar, spectr: SpectrType.M }),
-            getStarType({ type: StarType.GiantStar, spectr: SpectrType.G }),
-            getStarType({ type: StarType.GiantStar, spectr: SpectrType.A }),
-            getStarType({ type: StarType.GiantStar, spectr: SpectrType.B }),
-            getStarType({ type: StarType.WhiteDwarf, spectr: SpectrType.X }),
-            getStarType({ type: StarType.NeutronStar, spectr: SpectrType.X }),
-            getStarType({ type: StarType.BlackHole, spectr: SpectrType.X }),
+            getStarType({
+                type: StarType.MainSeqStar,
+                spectr: SpectrType.M,
+            }),
+            getStarType({
+                type: StarType.MainSeqStar,
+                spectr: SpectrType.K,
+            }),
+            getStarType({
+                type: StarType.MainSeqStar,
+                spectr: SpectrType.G,
+            }),
+            getStarType({
+                type: StarType.MainSeqStar,
+                spectr: SpectrType.F,
+            }),
+            getStarType({
+                type: StarType.MainSeqStar,
+                spectr: SpectrType.A,
+            }),
+            getStarType({
+                type: StarType.MainSeqStar,
+                spectr: SpectrType.B,
+            }),
+            getStarType({
+                type: StarType.MainSeqStar,
+                spectr: SpectrType.O,
+            }),
+            getStarType({
+                type: StarType.GiantStar,
+                spectr: SpectrType.M,
+            }),
+            getStarType({
+                type: StarType.GiantStar,
+                spectr: SpectrType.G,
+            }),
+            getStarType({
+                type: StarType.GiantStar,
+                spectr: SpectrType.A,
+            }),
+            getStarType({
+                type: StarType.GiantStar,
+                spectr: SpectrType.B,
+            }),
+            getStarType({
+                type: StarType.WhiteDwarf,
+                spectr: SpectrType.X,
+            }),
+            getStarType({
+                type: StarType.NeutronStar,
+                spectr: SpectrType.X,
+            }),
+            getStarType({
+                type: StarType.BlackHole,
+                spectr: SpectrType.X,
+            }),
         ]
         const counts: Record<string, number> = {}
         for (const star of props.galaxy.stars) {
@@ -125,78 +169,98 @@ const GalaxyOverview: Component<{ galaxy: Galaxy; search: string }> = (
         return order
             .filter((name) => counts[name])
             .map((name) => [name, counts[name]!] as const)
-    })
-
-    const allVeins = createMemo(() => combineAllVeins(props.galaxy.stars))
-    const allGases = createMemo(() => combineAllGases(props.galaxy.stars))
-
+    }
+    const allVeins = () => combineAllVeins(props.galaxy.stars)
+    const allGases = () => combineAllGases(props.galaxy.stars)
     return (
-        <div class={styles.root}>
-            <div class={styles.info}>
-                <div class={styles.card}>
-                    <div class={styles.title}>
+        <div className={styles.root}>
+            <div className={styles.info}>
+                <div className={styles.card}>
+                    <div className={styles.title}>
                         <span>
                             {t`Seed`}: {props.galaxy.seed}
                         </span>
                     </div>
                 </div>
-                <Show when={starTypeCounts().length > 0}>
-                    <div class={styles.card}>
-                        <div class={styles.title}>
-                            <span>{t`Star types`}</span>
+                {starTypeCounts().length > 0 ? (
+                    <>
+                        <div className={styles.card}>
+                            <div className={styles.title}>
+                                <span>{t`Star types`}</span>
+                            </div>
+                            {starTypeCounts().map(([name, count], _index) => (
+                                <Fragment key={_index}>
+                                    {
+                                        <div className={styles.row}>
+                                            <div className={styles.field}>
+                                                {name}:
+                                            </div>
+                                            <div className={styles.value}>
+                                                {count}
+                                            </div>
+                                        </div>
+                                    }
+                                </Fragment>
+                            ))}
                         </div>
-                        <For each={starTypeCounts()}>
-                            {([name, count]) => (
-                                <div class={styles.row}>
-                                    <div class={styles.field}>{name}:</div>
-                                    <div class={styles.value}>{count}</div>
-                                </div>
-                            )}
-                        </For>
-                    </div>
-                </Show>
-                <Show when={allVeins().length > 0}>
-                    <div class={styles.card}>
-                        <div class={styles.title}>
-                            <span>{t`Resources`}</span>
+                    </>
+                ) : null}
+                {allVeins().length > 0 ? (
+                    <>
+                        <div className={styles.card}>
+                            <div className={styles.title}>
+                                <span>{t`Resources`}</span>
+                            </div>
+                            {allVeins().map((vein, _index2) => (
+                                <Fragment key={_index2}>
+                                    {
+                                        <div className={styles.row}>
+                                            <div className={styles.field}>
+                                                <GameIcon
+                                                    vein={vein.veinType}
+                                                />
+                                                {veinNames[vein.veinType]()}:
+                                            </div>
+                                            <Vein
+                                                className={styles.value}
+                                                stat={vein}
+                                            />
+                                        </div>
+                                    }
+                                </Fragment>
+                            ))}
                         </div>
-                        <For each={allVeins()}>
-                            {(vein) => (
-                                <div class={styles.row}>
-                                    <div class={styles.field}>
-                                        {veinNames[vein.veinType]()}:
-                                    </div>
-                                    <Vein class={styles.value} stat={vein} />
-                                </div>
-                            )}
-                        </For>
-                    </div>
-                </Show>
-                <Show when={allGases().length > 0}>
-                    <div class={styles.card}>
-                        <div class={styles.title}>
-                            <span>{t`Gas rate`}</span>
+                    </>
+                ) : null}
+                {allGases().length > 0 ? (
+                    <>
+                        <div className={styles.card}>
+                            <div className={styles.title}>
+                                <span>{t`Gas rate`}</span>
+                            </div>
+                            {allGases().map(([type, amount], _index3) => (
+                                <Fragment key={_index3}>
+                                    {
+                                        <div className={styles.row}>
+                                            <div className={styles.field}>
+                                                <GameIcon gas={type} />
+                                                {gasTypeNames[type]()}:
+                                            </div>
+                                            <div className={styles.value}>
+                                                {formatNumber(amount, 4)} /s
+                                            </div>
+                                        </div>
+                                    }
+                                </Fragment>
+                            ))}
                         </div>
-                        <For each={allGases()}>
-                            {([type, amount]) => (
-                                <div class={styles.row}>
-                                    <div class={styles.field}>
-                                        {gasTypeNames[type]()}:
-                                    </div>
-                                    <div class={styles.value}>
-                                        {formatNumber(amount, 4)} /s
-                                    </div>
-                                </div>
-                            )}
-                        </For>
-                    </div>
-                </Show>
+                    </>
+                ) : null}
             </div>
-            <div class={styles.map}>
+            <div className={styles.map}>
                 <Starmap galaxy={props.galaxy} search={props.search} />
             </div>
         </div>
     )
 }
-
 export default GalaxyOverview

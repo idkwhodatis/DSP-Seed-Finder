@@ -253,9 +253,7 @@ declare global {
     declare type Rule = SimpleRule | CompoundRule
 
     declare type CompositeRule =
-        | Rule.Composite
-        | Rule.CompositeAnd
-        | Rule.CompositeOr
+        Rule.Composite | Rule.CompositeAnd | Rule.CompositeOr
 
     declare type FindRange = [integer, integer] | Int32Array<ArrayBuffer>
 
@@ -354,6 +352,7 @@ declare global {
     }
 
     declare interface ExportOptions {
+        signal?: AbortSignal
         language: Lang
         format: "csv" | "xlsx" | "txt"
         concurrency: integer

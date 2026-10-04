@@ -1,0 +1,146 @@
+{
+    "iron-ore": {
+        "x": 400,
+        "y": 480,
+        "width": 80,
+        "height": 80,
+        "total_width": 1120,
+        "total_height": 1120
+    },
+    "copper-ore": {
+        "x": 480,
+        "y": 160,
+        "width": 80,
+        "height": 80,
+        "total_width": 1120,
+        "total_height": 1120
+    },
+    "silicium-ore": {
+        "x": 80,
+        "y": 800,
+        "width": 80,
+        "height": 80,
+        "total_width": 1120,
+        "total_height": 1120
+    },
+    "titanium-ore": {
+        "x": 0,
+        "y": 960,
+        "width": 80,
+        "height": 80,
+        "total_width": 1120,
+        "total_height": 1120
+    },
+    "stone-ore": {
+        "x": 160,
+        "y": 880,
+        "width": 80,
+        "height": 80,
+        "total_width": 1120,
+        "total_height": 1120
+    },
+    "coal-ore": {
+        "x": 400,
+        "y": 160,
+        "width": 80,
+        "height": 80,
+        "total_width": 1120,
+        "total_height": 1120
+    },
+    "oil": {
+        "x": 160,
+        "y": 640,
+        "width": 80,
+        "height": 80,
+        "total_width": 1120,
+        "total_height": 1120
+    },
+    "gas-hydrate": {
+        "x": 960,
+        "y": 320,
+        "width": 80,
+        "height": 80,
+        "total_width": 1120,
+        "total_height": 1120
+    },
+    "diamond-ore": {
+        "x": 160,
+        "y": 240,
+        "width": 80,
+        "height": 80,
+        "total_width": 1120,
+        "total_height": 1120
+    },
+    "fractal-silica": {
+        "x": 240,
+        "y": 320,
+        "width": 80,
+        "height": 80,
+        "total_width": 1120,
+        "total_height": 1120
+    },
+    "crystal-rubber": {
+        "x": 720,
+        "y": 160,
+        "width": 80,
+        "height": 80,
+        "total_width": 1120,
+        "total_height": 1120
+    },
+    "grating-ore": {
+        "x": 400,
+        "y": 400,
+        "width": 80,
+        "height": 80,
+        "total_width": 1120,
+        "total_height": 1120
+    },
+    "bamboo-crystal": {
+        "x": 960,
+        "y": 0,
+        "width": 80,
+        "height": 80,
+        "total_width": 1120,
+        "total_height": 1120
+    },
+    "mono-mag-ore": {
+        "x": 800,
+        "y": 560,
+        "width": 80,
+        "height": 80,
+        "total_width": 1120,
+        "total_height": 1120
+    },
+    "hydrogen": {
+        "x": 800,
+        "y": 400,
+        "width": 80,
+        "height": 80,
+        "total_width": 1120,
+        "total_height": 1120
+    },
+    "deuterium": {
+        "x": 0,
+        "y": 240,
+        "width": 80,
+        "height": 80,
+        "total_width": 1120,
+        "total_height": 1120
+    },
+    "water": {
+        "x": 320,
+        "y": 1040,
+        "width": 80,
+        "height": 80,
+        "total_width": 1120,
+        "total_height": 1120
+    },
+    "sulphuric-acid": {
+        "x": 560,
+        "y": 880,
+        "width": 80,
+        "height": 80,
+        "total_width": 1120,
+        "total_height": 1120
+    }
+}

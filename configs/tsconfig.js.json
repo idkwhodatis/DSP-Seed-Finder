@@ -8,8 +8,7 @@
         },
 
         /* Bundler mode */
-        "jsx": "preserve",
-        "jsxImportSource": "solid-js",
+        "jsx": "react-jsx",
         "types": ["vite/client"]
     },
     "include": ["../web"],

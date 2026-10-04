@@ -1,9 +1,10 @@
-import { Component, createMemo, createSignal, For, JSX, Show } from "solid-js"
-import styles from "~styles"
-import { A, useNavigate } from "@solidjs/router"
-import { StarType } from "../enums"
-import { Portal } from "solid-js/web"
+import { useEffect, useId, useRef, type FC, type SVGProps } from "react"
+import { createPortal } from "react-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { computePosition, flip } from "@floating-ui/dom"
+import { useLiveState } from "../hooks/useLiveState"
+import { StarType } from "../enums"
+import styles from "~styles"
 
 type Color = [number, number, number]
 
@@ -146,98 +147,135 @@ function getConnectors(stars: Star[]) {
     return output
 }
 
-const StarNode: Component<{ star: Star; seed: number; search: string }> = (
-    props,
-) => {
+const StarNode: FC<{ star: Star; seed: number; search: string }> = (props) => {
     const navigate = useNavigate()
-    const [hover, setHover] = createSignal(false)
-    let node: SVGCircleElement
-    let popup: HTMLAnchorElement
-
-    const color = createMemo(() =>
+    const [hover, setHover] = useLiveState(false)
+    const [focused, setFocused] = useLiveState(false)
+    const node = useRef<SVGCircleElement>(null)
+    const popup = useRef<HTMLAnchorElement>(null)
+    const popupId = useId()
+    const visible = hover() || focused()
+    const color =
         props.star.type === StarType.BlackHole
             ? blackHoleColor
             : props.star.type === StarType.NeutronStar
               ? neutronStarColor
-              : `rgb(${getStarColor(props.star.color).join(", ")})`,
-    )
+              : `rgb(${getStarColor(props.star.color).join(", ")})`
+    const url = `/galaxy/${props.seed}/${props.star.index}${props.search}`
 
-    const url = createMemo(
-        () => `/galaxy/${props.seed}/${props.star.index}${props.search}`,
-    )
-
-    function placePopup() {
-        computePosition(node!, popup!, {
-            strategy: "fixed",
-            placement: "top",
-            middleware: [flip({ fallbackPlacements: ["bottom"] })],
-        }).then(({ x, y }) => {
-            popup!.style.left = x + "px"
-            popup!.style.top = y + "px"
-        })
-    }
-
-    function getStarStyle(): JSX.CircleSVGAttributes<SVGCircleElement> {
-        const { type, position } = props.star
-        let size = 0.4
-        if (type === StarType.GiantStar) {
-            size *= 2
-        } else if (type === StarType.WhiteDwarf) {
-            size /= 2
+    useEffect(() => {
+        if (!visible) return
+        const nodeElement = node.current
+        const popupElement = popup.current
+        if (!nodeElement || !popupElement) return
+        let active = true
+        let requestId = 0
+        popupElement.style.visibility = "hidden"
+        const placePopup = () => {
+            const id = ++requestId
+            void computePosition(nodeElement, popupElement, {
+                strategy: "fixed",
+                placement: "top",
+                middleware: [flip({ fallbackPlacements: ["bottom"] })],
+            })
+                .then(({ x, y }) => {
+                    if (
+                        !active ||
+                        id !== requestId ||
+                        node.current !== nodeElement ||
+                        popup.current !== popupElement ||
+                        !nodeElement.isConnected ||
+                        !popupElement.isConnected
+                    )
+                        return
+                    popupElement.style.left = `${x}px`
+                    popupElement.style.top = `${y}px`
+                    popupElement.style.visibility = "visible"
+                })
+                .catch(() => {
+                    /* Positioning is optional; the star itself remains navigable. */
+                })
         }
-        return {
-            r: size,
-            cx: position[0],
-            cy: -position[2],
-            fill: color(),
-            "stroke-width": 1,
-            stroke: "transparent",
-            onClick: () => navigate(url()),
-            onMouseEnter: () => {
-                placePopup()
-                setHover(true)
-            },
-            onMouseLeave: () => {
+        placePopup()
+        window.addEventListener("resize", placePopup)
+        window.addEventListener("scroll", placePopup, true)
+        return () => {
+            active = false
+            window.removeEventListener("resize", placePopup)
+            window.removeEventListener("scroll", placePopup, true)
+        }
+    }, [visible, props.star, url])
+
+    const size =
+        props.star.type === StarType.GiantStar
+            ? 0.8
+            : props.star.type === StarType.WhiteDwarf
+              ? 0.2
+              : 0.4
+    const starStyle: SVGProps<SVGCircleElement> = {
+        r: size,
+        cx: props.star.position[0],
+        cy: -props.star.position[2],
+        fill: color,
+        strokeWidth: focused() ? 0.12 : 1,
+        stroke: focused() ? "#ffffff" : "transparent",
+        role: "link",
+        tabIndex: 0,
+        "aria-label": `${props.star.name}, #${props.star.index + 1}`,
+        "aria-describedby": visible ? popupId : undefined,
+        onClick: () => navigate(url),
+        onMouseEnter: () => setHover(true),
+        onMouseLeave: () => setHover(false),
+        onFocus: () => setFocused(true),
+        onBlur: () => setFocused(false),
+        onKeyDown: (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault()
+                navigate(url)
+            }
+            if (event.key === "Escape") {
                 setHover(false)
-            },
-        }
+                setFocused(false)
+            }
+        },
     }
 
     return (
         <>
-            <Show when={props.star.index === 0}>
+            {props.star.index === 0 && (
                 <circle
                     r={0.7}
                     cx={props.star.position[0]}
                     cy={-props.star.position[2]}
                     fill="#00881d"
+                    aria-hidden="true"
                 />
-            </Show>
-            <circle ref={node!} class={styles.star} {...getStarStyle()} />
-            <Portal mount={document.getElementById("portal")!}>
-                <A
-                    href={url()}
-                    ref={popup!}
-                    style={{
-                        color: color(),
-                        display: hover() ? "block" : "none",
-                    }}
-                    class={styles.popup}
+            )}
+            <circle ref={node} className={styles.star} {...starStyle} />
+            {createPortal(
+                <Link
+                    id={popupId}
+                    to={url}
+                    ref={popup}
+                    tabIndex={-1}
+                    style={{ color, display: visible ? "block" : "none" }}
+                    className={styles.popup}
                 >
                     {props.star.name}
-                </A>
-            </Portal>
+                </Link>,
+                document.getElementById("portal") ?? document.body,
+            )}
         </>
     )
 }
 
-const Starmap: Component<{ galaxy: Galaxy; search: string }> = (props) => {
+const Starmap: FC<{ galaxy: Galaxy; search: string }> = (props) => {
     function getViewBox() {
-        let top = -Infinity
-        let bottom = Infinity
-        let left = Infinity
-        let right = -Infinity
-
+        if (props.galaxy.stars.length === 0) return "-2 -2 4 4"
+        let top = -Infinity,
+            bottom = Infinity,
+            left = Infinity,
+            right = -Infinity
         for (const star of props.galaxy.stars) {
             const [x, , y] = star.position
             top = Math.max(top, y)
@@ -251,38 +289,35 @@ const Starmap: Component<{ galaxy: Galaxy; search: string }> = (props) => {
         right += 2
         return `${left} ${-top} ${right - left} ${top - bottom}`
     }
-
     return (
         <svg
             viewBox={getViewBox()}
             preserveAspectRatio="xMidYMid slice"
-            class={styles.starmap}
+            className={styles.starmap}
         >
-            <For each={getConnectors(props.galaxy.stars)}>
-                {([[x1, , y1], [x2, , y2]]) => (
+            {getConnectors(props.galaxy.stars).map(
+                ([[x1, , y1], [x2, , y2]], index) => (
                     <line
+                        key={index}
                         x1={x1}
                         y1={-y1}
                         x2={x2}
                         y2={-y2}
-                        stroke-width={0.07}
+                        strokeWidth={0.07}
                         stroke="#666"
                     />
-                )}
-            </For>
-            <For
-                each={props.galaxy.stars.toSorted(
-                    (a, b) => a.position[1] - b.position[1],
-                )}
-            >
-                {(star) => (
+                ),
+            )}
+            {props.galaxy.stars
+                .toSorted((a, b) => a.position[1] - b.position[1])
+                .map((star) => (
                     <StarNode
+                        key={star.index}
                         star={star}
                         seed={props.galaxy.seed}
                         search={props.search}
                     />
-                )}
-            </For>
+                ))}
         </svg>
     )
 }

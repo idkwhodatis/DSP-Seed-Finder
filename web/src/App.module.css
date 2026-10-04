@@ -1,32 +1,12 @@
 .app {
-    height: 100%;
-
-    --primary: #1668dc;
-    --primary-light: #3c89e8;
-    --error: #ec5b59;
-    --error-light: #ee7770;
-
-    color: var(--text);
-    background-color: var(--background);
+    height: 100dvh;
+    color: var(--foreground);
+    background: var(--background);
     display: flex;
     flex-direction: column;
 }
-
-.light {
-    --text: #213547;
-    --text-light: #444d55;
-    --background: #ffffff;
-    --modal-background: #f5f5f5;
-}
-
-.dark {
-    --text: #ffffff;
-    --text-light: #b0b4b8;
-    --background: #242424;
-    --modal-background: #1f1f1f;
-}
-
 .content {
-    flex: 1 1 0;
+    flex: 1;
     min-height: 0;
+    overflow: auto;
 }

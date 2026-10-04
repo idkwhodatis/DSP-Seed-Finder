@@ -1,14 +1,7 @@
-import {
-    Component,
-    Index,
-    Show,
-    batch,
-    createEffect,
-    createMemo,
-    createSignal,
-    on,
-} from "solid-js"
-import Button from "../components/Button"
+import { type FC, useEffect, useRef } from "react"
+import { Link, useNavigate, useParams } from "react-router-dom"
+import { ExternalLink } from "lucide-react"
+import { useLiveState, useObjectState } from "../hooks/useLiveState"
 import {
     getProfileInfo,
     getProfileProgress,
@@ -22,15 +15,13 @@ import {
     minStarCount,
     validateRules,
 } from "../util"
+import Button from "../components/Button"
 import RuleEditor from "../partials/RuleEditor"
 import styles from "~styles"
-import { createStore } from "solid-js/store"
 import ProfilesModal from "../partials/ProfilesModal"
 import Modal from "../components/Modal"
 import ProgressBar from "../components/ProgressBar"
-import { IoOpenOutline } from "solid-icons/io"
 import StarView from "../partials/StarView"
-import { A, useNavigate, useParams } from "@solidjs/router"
 import ProgressEditor from "../partials/ProgressEditor"
 import ProfileManager from "../partials/ProfileManager"
 import Pagination from "../components/Pagination"
@@ -40,57 +31,59 @@ import { useLingui } from "#lingui"
 import { DEFAULT_BATCH_SIZE } from "../constants"
 import { generateGalaxy } from "../worldgen"
 
-const defaultProgress: () => ProfileProgress = () => ({
+const defaultProgress = (): ProfileProgress => ({
     id: "",
     params: getDefaultParams(),
-    concurrency: navigator.hardwareConcurrency,
+    concurrency: navigator.hardwareConcurrency || 1,
     autosave: 5,
     range: [0, 1e8],
     total: 0,
     found: 0,
     batchSize: DEFAULT_BATCH_SIZE,
     nextBatchId: 0,
-    totalBatchCount: 0,
     rules: [],
 })
-
 const PAGE_SIZE = 100
-
-const StarViewModal: Component<{
+const StarViewModal: FC<{
     seed: integer
     index: integer
     params: GameParameters
     search: string
 }> = (props) => {
-    const [galaxy, setGalaxy] = createSignal<Galaxy | null>(null)
-
-    createEffect(() => {
-        generateGalaxy(false, props.seed, props.params).then((g): void => {
-            setGalaxy(g)
-        })
-    })
-
+    const [galaxy, setGalaxy] = useLiveState<Galaxy | null>(null)
+    const { t } = useLingui()
+    useEffect(() => {
+        let current = true
+        setGalaxy(null)
+        generateGalaxy(false, props.seed, props.params)
+            .then((value) => {
+                if (current) setGalaxy(value)
+            })
+            .catch((error) => {
+                if (current) console.error(error)
+            })
+        return () => {
+            current = false
+        }
+    }, [props.seed, props.params, setGalaxy])
     function buildUrl(starIndex: integer) {
         return `/galaxy/${props.seed}/${starIndex}${props.search}`
     }
-
-    const { t } = useLingui()
-
-    return (
-        <Show when={!!galaxy()}>
-            <div class={styles.viewTop}>
-                <div class={styles.viewTitle}>
+    return galaxy() ? (
+        <>
+            <div className={styles.viewTop}>
+                <div className={styles.viewTitle}>
                     {t`Seed: `}
                     {String(props.seed).padStart(8, "0")}
                 </div>
-                <A
-                    class={styles.viewNewTab}
-                    href={buildUrl(props.index)}
+                <Link
+                    className={styles.viewNewTab}
+                    to={buildUrl(props.index)}
                     target="_blank"
                 >
                     {t`View in new tab`}
-                    <IoOpenOutline />
-                </A>
+                    <ExternalLink />
+                </Link>
             </div>
             <StarView
                 star={galaxy()!.stars[props.index]!}
@@ -98,80 +91,62 @@ const StarViewModal: Component<{
                 buildUrl={buildUrl}
                 newPage
             />
-        </Show>
-    )
+        </>
+    ) : null
 }
-
-const SearchResult: Component<{
+const SearchResult: FC<{
     id: string
     page: integer
     updateKey: number
     params: GameParameters
 }> = (props) => {
-    const [results, setResults] = createSignal<ProgressResult[]>([])
-    const [active, setActive] = createSignal<ProgressResult | null>(null)
-    let isLoading = -1
-
-    const searchString = createMemo(() => getSearch(props.params))
-
-    function update() {
-        if (isLoading === props.page) return
-        const page = props.page
-        isLoading = page
-        console.debug("results loading")
-        getProfileResult(props.id, (page - 1) * PAGE_SIZE, PAGE_SIZE).then(
-            (list) => {
-                console.debug("results loaded", list)
-                if (isLoading === page) {
-                    setResults(list)
-                    isLoading = -1
-                }
-            },
-        )
-    }
-
-    createEffect(update)
-
-    createEffect(
-        on(
-            () => props.updateKey,
-            () => {
-                if (results().length < PAGE_SIZE) {
-                    update()
-                }
-            },
-        ),
-    )
-
+    const [results, setResults] = useLiveState<ProgressResult[]>([])
+    const [active, setActive] = useLiveState<ProgressResult | null>(null)
+    const searchString = () => getSearch(props.params)
+    useEffect(() => {
+        setResults([])
+        setActive(null)
+    }, [props.id, props.page, setResults, setActive])
+    useEffect(() => {
+        let current = true
+        getProfileResult(props.id, (props.page - 1) * PAGE_SIZE, PAGE_SIZE)
+            .then((list) => {
+                if (current) setResults(list)
+            })
+            .catch((error) => {
+                if (current) console.error(error)
+            })
+        return () => {
+            current = false
+        }
+    }, [props.id, props.page, props.updateKey, setResults])
     function buildUrl(item: ProgressResult) {
         return `/galaxy/${item.seed}/${item.index}${searchString()}`
     }
-
     return (
         <>
-            <div class={styles.results}>
-                <Index each={results()}>
-                    {(result) => (
-                        <A
-                            href={buildUrl(result())}
-                            target="_blank"
-                            class={styles.result}
-                            onClick={(ev) => {
-                                ev.preventDefault()
-                                setActive(result())
-                            }}
-                        >
-                            <span class={styles.resultSeed}>
-                                {String(result().seed).padStart(8, "0")}
-                            </span>
-                            <span class={styles.resultIndex}>
-                                #{result().index + 1}
-                            </span>
-                        </A>
-                    )}
-                </Index>
+            <div className={styles.results}>
+                {results().map((result) => (
+                    <Link
+                        key={result.id}
+                        to={buildUrl(result)}
+                        target="_blank"
+                        className={styles.result}
+                        onClick={(event) => {
+                            event.preventDefault()
+                            setActive(result)
+                        }}
+                    >
+                        <span className={styles.resultSeed}>
+                            {String(result.seed).padStart(8, "0")}
+                        </span>
+                        <span className={styles.resultIndex}>
+                            #{result.index + 1}
+                        </span>
+                    </Link>
+                ))}
             </div>
-            <Show when={!!active()}>
+            {active() && (
                 <Modal visible onClose={() => setActive(null)} backdropDismiss>
                     <StarViewModal
                         seed={active()!.seed}
@@ -180,116 +155,125 @@ const SearchResult: Component<{
                         search={searchString()}
                     />
                 </Modal>
-            </Show>
+            )}
         </>
     )
 }
-
-const FindStar: Component = () => {
+const FindStar: FC = () => {
     const params = useParams()
     const navigate = useNavigate()
     const { t } = useLingui()
-    const [name, setName] = createSignal(t`Untitled`)
-    const [profile, setProfile] = createSignal<ProfileInfo | null>()
+    const [name, setName] = useLiveState(t`Untitled`)
+    const [profile, setProfile] = useLiveState<ProfileInfo | null>(null)
     const [progress, setProgress] =
-        createStore<ProfileProgress>(defaultProgress())
-    const [nativeMode, setNativeMode] = createSignal(false)
-    const [profileModal, setProfileModal] = createSignal(false)
-    const [exportModal, setExportModal] = createSignal(false)
+        useObjectState<ProfileProgress>(defaultProgress())
+    const [nativeMode, setNativeMode] = useLiveState(false)
+    const [profileModal, setProfileModal] = useLiveState(false)
+    const [exportModal, setExportModal] = useLiveState(false)
     const [store] = useStore()
-    const [currentPage, setCurrentPage] = createSignal(1)
+    const [currentPage, setCurrentPage] = useLiveState(1)
+    const loadVersion = useRef(0)
+    const [loading, setLoading] = useLiveState(false)
     const isLoaded = () => !!profile()
     const hasProgress = () => progress.nextBatchId > 0
     const isDisabled = () => true
     const hasCompleted = () => {
-        const totalBatchCount = Math.ceil(progress.total / progress.batchSize)
-        return totalBatchCount > 0 && progress.nextBatchId >= totalBatchCount
+        const batches = Math.ceil(progress.total / progress.batchSize)
+        return batches > 0 && progress.nextBatchId >= batches
     }
-
-    function changeProfile(profile: ProfileInfo | null) {
-        batch(() => {
-            if (profile) {
-                navigate(`/find-star/${profile.id}`)
-                setProfile(profile)
-                setName(profile.name)
-            } else {
-                navigate(`/find-star`)
-                setProfile(null)
-                setName("")
-            }
-        })
-    }
-
-    async function onSelectProfile(profile: ProfileInfo) {
-        const progress = await getProfileProgress(profile.id)
-        if (progress) {
-            batch(() => {
-                changeProfile(profile)
-                setProgress(progress)
-                setProfileModal(false)
-            })
+    async function onSelectProfile(next: ProfileInfo) {
+        const version = ++loadVersion.current
+        setLoading(true)
+        try {
+            const saved = await getProfileProgress(next.id)
+            if (version !== loadVersion.current || saved?.id !== next.id) return
+            setCurrentPage(1)
+            setProfile(next)
+            setName(next.name)
+            setProgress({ ...defaultProgress(), ...saved })
+            setProfileModal(false)
+            setExportModal(false)
+            if (params.profileId !== next.id) navigate(`/find-star/${next.id}`)
+        } catch (error) {
+            if (version === loadVersion.current) console.error(error)
+        } finally {
+            if (version === loadVersion.current) setLoading(false)
         }
     }
-
-    const isRuleValid = createMemo(() => validateRules(progress.rules))
-
-    function isValid(): boolean {
+    function isValid() {
         if (
-            name() === "" ||
+            !name().trim() ||
             progress.params.starCount < minStarCount ||
             progress.params.starCount > maxStarCount ||
             !Number.isInteger(progress.concurrency) ||
             progress.concurrency < 1 ||
             progress.autosave <= 0
-        ) {
+        )
             return false
-        }
-        if (Array.isArray(progress.range)) {
-            if (
-                progress.range[0] < 0 ||
+        if (
+            Array.isArray(progress.range) &&
+            (progress.range[0] < 0 ||
                 progress.range[1] > 1e8 ||
-                progress.range[0] >= progress.range[1]
-            ) {
-                return false
-            }
-        }
-        return isRuleValid()
+                progress.range[0] >= progress.range[1])
+        )
+            return false
+        return validateRules(progress.rules)
     }
-
-    createEffect(
-        on(
-            () => params.profileId,
-            (profileId) => {
-                if (profileId) {
-                    if (profile()?.id !== profileId) {
-                        Promise.all([
-                            getProfileInfo(profileId),
-                            getProfileProgress(profileId),
-                        ]).then(([info, progress]): void => {
-                            if (info && info.id === profileId) {
-                                batch(() => {
-                                    setProfile(info)
-                                    setName(info.name)
-                                    if (progress && progress.id === profileId) {
-                                        setProgress(progress)
-                                    }
-                                })
-                            }
-                        })
-                    }
-                }
-            },
-        ),
+    useEffect(() => {
+        const profileId = params.profileId
+        if (profileId === profile()?.id) return
+        const version = ++loadVersion.current
+        setCurrentPage(1)
+        setExportModal(false)
+        setProfile(null)
+        setProgress(defaultProgress())
+        if (!profileId) {
+            setLoading(false)
+            return
+        }
+        setLoading(true)
+        Promise.all([getProfileInfo(profileId), getProfileProgress(profileId)])
+            .then(([info, saved]) => {
+                if (version !== loadVersion.current || info?.id !== profileId)
+                    return
+                setProfile(info)
+                setName(info.name)
+                if (saved?.id === profileId)
+                    setProgress({ ...defaultProgress(), ...saved })
+            })
+            .catch((error) => {
+                if (version === loadVersion.current) console.error(error)
+            })
+            .finally(() => {
+                if (version === loadVersion.current) setLoading(false)
+            })
+        return () => {
+            ++loadVersion.current
+        }
+    }, [
+        params.profileId,
+        profile,
+        setCurrentPage,
+        setExportModal,
+        setLoading,
+        setName,
+        setProfile,
+        setProgress,
+    ])
+    useEffect(
+        () => () => {
+            ++loadVersion.current
+        },
+        [],
     )
-
     return (
-        <div class={styles.content}>
+        <div className={styles.content}>
             <div
-                class={styles.warning}
+                className={styles.warning}
             >{t`Star Finder is no longer supported. Please use Galaxy Finder instead.`}</div>
             <ProfileManager
                 onLoad={() => setProfileModal(true)}
-                disabled={store.searching}
+                disabled={store.searching || loading()}
                 isValid={isValid()}
                 isLoaded={isLoaded()}
             />
@@ -301,54 +285,59 @@ const FindStar: Component = () => {
                 nativeMode={nativeMode()}
                 onNativeModeChange={setNativeMode}
                 isLoaded={isLoaded()}
-                searching={store.searching}
+                searching={store.searching || loading()}
             />
-            <div class={styles.rules}>{t`Rules`}</div>
+            <div className={styles.rules}>{t`Rules`}</div>
             <RuleEditor
                 value={progress.rules}
                 onChange={(rules) => setProgress("rules", rules)}
                 disabled={isDisabled()}
             />
-            <div class={styles.execute}>
-                <div class={styles.progress}>
-                    <Show
-                        when={
-                            store.searching ||
-                            (hasProgress() && !hasCompleted())
-                        }
-                    >
-                        <div class={styles.progressText}>{t`Progress:`}</div>
-                        <ProgressBar
-                            class={styles.progressBar}
-                            current={progress.nextBatchId * progress.batchSize}
-                            total={progress.total}
-                        />
-                    </Show>
+            <div className={styles.execute}>
+                <div className={styles.progress}>
+                    {store.searching || (hasProgress() && !hasCompleted()) ? (
+                        <>
+                            <div
+                                className={styles.progressText}
+                            >{t`Progress:`}</div>
+                            <ProgressBar
+                                className={styles.progressBar}
+                                current={
+                                    progress.nextBatchId * progress.batchSize
+                                }
+                                total={progress.total}
+                            />
+                        </>
+                    ) : null}
                 </div>
-                <Show when={hasProgress()}>
-                    <Button
-                        onClick={() => setExportModal(true)}
-                    >{t`Export`}</Button>
-                </Show>
+                {hasProgress() && profile() ? (
+                    <>
+                        <Button
+                            onClick={() => setExportModal(true)}
+                        >{t`Export`}</Button>
+                    </>
+                ) : null}
             </div>
-            <Show when={hasProgress()}>
-                <Pagination
-                    current={currentPage()}
-                    total={
-                        Math.max(
-                            0,
-                            Math.floor((progress.found - 1) / PAGE_SIZE),
-                        ) + 1
-                    }
-                    onChange={setCurrentPage}
-                />
-                <SearchResult
-                    id={profile()!.id}
-                    page={currentPage()}
-                    updateKey={0}
-                    params={progress.params}
-                />
-            </Show>
+            {hasProgress() && profile() ? (
+                <>
+                    <Pagination
+                        current={currentPage()}
+                        total={
+                            Math.max(
+                                0,
+                                Math.floor((progress.found - 1) / PAGE_SIZE),
+                            ) + 1
+                        }
+                        onChange={setCurrentPage}
+                    />
+                    <SearchResult
+                        id={profile()!.id}
+                        page={currentPage()}
+                        updateKey={0}
+                        params={progress.params}
+                    />
+                </>
+            ) : null}
             <ProfilesModal
                 visible={profileModal()}
                 onClose={() => setProfileModal(false)}

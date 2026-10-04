@@ -38,3 +38,18 @@
     display: flex;
     flex-direction: column;
 }
+
+@media (max-width: 600px) {
+    .fields {
+        grid-template-columns: minmax(0, 1fr);
+        grid-auto-rows: auto;
+        gap: 6px;
+        margin: 12px 0;
+    }
+    .title,
+    .warn,
+    .progressText,
+    .button {
+        margin: 12px 0;
+    }
+}

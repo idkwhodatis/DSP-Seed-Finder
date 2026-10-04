@@ -1,28 +1,27 @@
-/* @refresh reload */
-import { render } from "solid-js/web"
-import { Navigate, Route, Router } from "@solidjs/router"
-
-import "./reset.css"
+import { createRoot } from "react-dom/client"
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom"
 import "./index.css"
 import App from "./App"
 import FindStar from "./views/FindStar"
-import Galaxy from "./views/Galaxy"
 import FindGalaxy from "./views/FindGalaxy"
-
-const root = document.getElementById("root")
-
-const dispose = render(
-    () => (
-        <Router base="/DSP-Seed-Finder" root={App}>
-            <Route path="/find-star/:profileId?" component={FindStar} />
-            <Route path="/find-galaxy/:profileId?" component={FindGalaxy} />
-            <Route path="/galaxy/:seed?/:index?" component={Galaxy} />
-            <Route path="" component={() => <Navigate href="/find-galaxy" />} />
-        </Router>
-    ),
-    root!,
+import Galaxy from "./views/Galaxy"
+const root = createRoot(document.getElementById("root")!)
+root.render(
+    <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+        <Routes>
+            <Route element={<App />}>
+                <Route path="/find-star/:profileId?" element={<FindStar />} />
+                <Route
+                    path="/find-galaxy/:profileId?"
+                    element={<FindGalaxy />}
+                />
+                <Route path="/galaxy/:seed?/:index?" element={<Galaxy />} />
+                <Route
+                    path="*"
+                    element={<Navigate to="/find-galaxy" replace />}
+                />
+            </Route>
+        </Routes>
+    </BrowserRouter>,
 )
-
-if (import.meta.hot) {
-    import.meta.hot.dispose(dispose)
-}
+if (import.meta.hot) import.meta.hot.dispose(() => root.unmount())

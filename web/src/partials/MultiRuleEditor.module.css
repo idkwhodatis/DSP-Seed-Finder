@@ -1,14 +1,14 @@
 .multiRuleEditor {
     padding: 12px;
-    border: 1px solid #424242;
+    border: 1px solid var(--border);
     border-radius: 8px;
-    min-width: 1080px;
+    min-width: 0;
 }
 
 .block {
-    background-color: rgba(160, 160, 160, 0.1);
+    background-color: var(--muted);
     border-radius: 8px;
-    padding: 20px;
+    padding: 12px;
 }
 
 .delete {
@@ -72,4 +72,42 @@
     border: none;
     padding: 12px 20px;
     min-height: calc(80vh - 40px);
+}
+
+.row {
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+.editRow {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    line-height: 32px;
+}
+.description {
+    min-width: 120px;
+}
+.delete svg {
+    width: 16px;
+    height: 16px;
+}
+.ruleEditor {
+    max-width: 1100px;
+    min-height: 0;
+}
+.selectConditionType {
+    display: inline-flex;
+}
+@media (max-width: 600px) {
+    .block {
+        padding: 8px;
+    }
+    .description {
+        flex-basis: 75%;
+    }
+    .ruleEditor {
+        padding: 8px;
+    }
 }

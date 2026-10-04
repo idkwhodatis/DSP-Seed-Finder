@@ -1,66 +1,54 @@
-import clsx from "clsx"
-import styles from "~styles"
-import { Component, batch, createRenderEffect, createSignal } from "solid-js"
-
-const NumberInput: Component<{
-    class?: string
+import { useEffect, useRef, useState } from "react"
+import Input, { type InputProps } from "./Input"
+type Props = Omit<InputProps, "value" | "onChange" | "onBlur"> & {
     value: number
+    emptyValue: number
     onChange?: (value: number) => void
     onBlur?: () => void
-    error?: boolean
-    emptyValue: number
-    disabled?: boolean
-    maxLength?: number
-}> = (props) => {
-    const getText = () =>
-        props.value === props.emptyValue ? "" : String(props.value)
-    // eslint-disable-next-line solid/reactivity
-    const [text, setText] = createSignal(getText())
-
-    function handleInput(value: string) {
-        batch(() => {
-            setText(value)
-            if (value) {
-                const num = Number(value)
-                if (!Number.isNaN(num)) {
-                    props.onChange?.(Number(num))
-                } else {
-                    props.onChange?.(props.emptyValue)
-                }
-            } else {
-                props.onChange?.(props.emptyValue)
-            }
-        })
-    }
-
-    createRenderEffect(() => {
-        const t = text()
-        if (t === "" && props.value !== props.emptyValue) {
-            setText(getText())
-        } else {
-            const num = Number(t)
-            if (!Number.isNaN(num) && props.value !== num) {
-                setText(getText())
-            }
+}
+export default function NumberInput({
+    value,
+    emptyValue,
+    onChange,
+    onBlur,
+    ...props
+}: Props) {
+    const getText = () => (value === emptyValue ? "" : String(value))
+    const [text, setText] = useState(getText)
+    const emitted = useRef<number | undefined>(undefined)
+    useEffect(() => {
+        // Keep transient drafts (".", "-", "1.") when a parent echoes our value.
+        // A different external value still replaces the draft immediately.
+        if (Object.is(emitted.current, value)) {
+            emitted.current = undefined
+            return
         }
-    })
-
+        setText((old) =>
+            (old === "" && value === emptyValue) ||
+            (old !== "" && Number(old) === value)
+                ? old
+                : getText(),
+        )
+    }, [value, emptyValue])
     return (
-        <input
-            class={clsx(
-                styles.input,
-                props.class,
-                props.error && styles.error,
-                props.disabled && styles.disabled,
-            )}
-            onBlur={() => props.onBlur?.()}
-            onInput={(ev) => handleInput(ev.currentTarget.value)}
-            value={text()}
-            maxLength={props.maxLength}
-            pattern="\\d+"
-            disabled={props.disabled}
+        <Input
+            {...props}
+            inputMode="decimal"
+            value={text}
+            onBlur={() => {
+                if (text !== "" && !Number.isFinite(Number(text)))
+                    setText(getText())
+                onBlur?.()
+            }}
+            onChange={(next) => {
+                setText(next)
+                const numeric =
+                    next !== "" && Number.isFinite(Number(next))
+                        ? Number(next)
+                        : emptyValue
+                emitted.current = numeric
+                onChange?.(numeric)
+            }}
         />
     )
 }
-
-export default NumberInput

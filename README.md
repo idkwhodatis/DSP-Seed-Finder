@@ -2,7 +2,7 @@
 
 DSP Seed Finder is a tool designed to assist you in finding seeds for Dyson Sphere Program.
 
-[Link to DSP Seed Finder](https://doubleuth.github.io/DSP-Seed-Finder/).
+[Link to DSP Seed Finder](https://idkwhodatis.github.io/DSP-Seed-Finder/).
 
 This tool offers the following functions.
 
@@ -42,7 +42,7 @@ cargo install wasm-pack
 3. Run the following to install dependencies
 
 ```shell
-npm install
+npm ci
 ```
 
 4. Run the following commands to compile
@@ -57,3 +57,19 @@ npm run build
 npm run dev # for web
 cargo run   # for native mode
 ```
+
+## React interface and validation
+
+The interface uses React 19, React Router, Tailwind 4 and compact shadcn-style Radix controls. The desktop finder keeps its two-column settings, 32px controls, and original text scale; narrow screens wrap instead of requiring horizontal page scrolling. Resource icons are decorative 18px inline atlas sprites. Their provenance, game-art ownership, and calculator license are in `web/public/icons/ATTRIBUTION.md`.
+
+Existing browser profiles, IndexedDB stores, local preferences, routes/query parameters, English/Chinese catalogs, the Rust generator, native WebSocket protocol, and worker-based searches are retained. Browser searches use isolated worker pools and ordered persistence checkpoints; exports support cancellation even during workbook generation.
+
+Run `npm ci`, then `npm run build` (Rust and wasm-pack required). `binaryen` is pinned in dev dependencies to provide `wasm-opt` reproducibly. `npm run build:web` can also be run separately once `pkg/` exists. A Windows executable is included as a download only when `target/release/dsp_seed.exe` is present; Linux/macOS web builds do not require that file. Native mode remains available with a separately built local binary.
+
+Checks:
+
+- `npm run check`: ESLint, app/worker/config TypeScript checks, Vitest interaction and worker regressions, production web build
+- `cargo test --release`: Rust generator checks
+- `npm run test:engine`: compiled native versus WASM generation, rule search, and repeated batch comparisons (run after the full build)
+
+The CI workflow runs the build and checks on pull requests. Only pushes to `master` invoke the existing GitHub Pages deployment job. Do not publish an unvalidated checkpoint.

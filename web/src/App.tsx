@@ -1,40 +1,38 @@
-import { createStore } from "solid-js/store"
-import clsx from "clsx"
-import styles from "~styles"
+import { useEffect } from "react"
+import { Outlet } from "react-router-dom"
 import { StoreContext, defaultStore } from "./store"
-import Header from "./partials/Header"
-import { ParentComponent, createEffect, onCleanup } from "solid-js"
+import { useObjectState } from "./hooks/useLiveState"
 import { I18nProvider } from "./lingui"
-
-const App: ParentComponent = (props) => {
-    const [store, setStore] = createStore<Store>(defaultStore)
-
-    createEffect(() => {
-        if (store.searching) {
-            const unload = (ev: Event) => {
-                ev.preventDefault()
-            }
-            window.addEventListener("beforeunload", unload)
-            onCleanup(() => window.removeEventListener("beforeunload", unload))
-        }
-    })
-
+import Header from "./partials/Header"
+import styles from "~styles"
+export default function App() {
+    const [store, setStore] = useObjectState(defaultStore)
+    useEffect(() => {
+        document.documentElement.classList.toggle(
+            "dark",
+            store.settings.darkMode,
+        )
+        document.documentElement.style.colorScheme = store.settings.darkMode
+            ? "dark"
+            : "light"
+    }, [store.settings.darkMode])
+    useEffect(() => {
+        if (!store.searching) return
+        const unload = (ev: BeforeUnloadEvent) => ev.preventDefault()
+        window.addEventListener("beforeunload", unload)
+        return () => window.removeEventListener("beforeunload", unload)
+    }, [store.searching])
     return (
         <StoreContext.Provider value={[store, setStore]}>
             <I18nProvider>
-                <div
-                    class={clsx(
-                        styles.app,
-                        store.settings.darkMode ? styles.dark : styles.light,
-                    )}
-                >
+                <div className={styles.app}>
                     <Header />
-                    <div class={styles.content}>{props.children}</div>
+                    <main className={styles.content}>
+                        <Outlet />
+                    </main>
                     <div id="portal" />
                 </div>
             </I18nProvider>
         </StoreContext.Provider>
     )
 }
-
-export default App

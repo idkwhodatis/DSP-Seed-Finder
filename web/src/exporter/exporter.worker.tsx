@@ -49,8 +49,6 @@ function getStarType(star: Star): string {
     }
 }
 
-const initPromise = init()
-
 const starFieldsGetter: Partial<
     Record<StarField, (galaxy: Galaxy, star: Star) => any>
 > = {
@@ -280,20 +278,32 @@ function generateExportData(
 }
 
 let loadPromise: Promise<ExportOptions["params"]> | undefined
-
-self.onmessage = (ev) => {
+let failed = false
+function reportError(error: unknown) {
+    if (failed) return
+    failed = true
+    self.postMessage({ type: "error", error: String(error) })
+}
+self.addEventListener("unhandledrejection", (event) => {
+    event.preventDefault()
+    reportError(event.reason)
+})
+self.onmessage = (event) => {
+    if (failed) return
     if (!loadPromise) {
-        const { params, language } = ev.data
-        loadPromise = initPromise
+        const { params, language } = event.data
+        loadPromise = Promise.resolve()
+            .then(() => init())
             .then(() => loadLanguage(language))
             .then(() => params)
+        void loadPromise.catch(reportError)
         return
     }
-    const seed = ev.data
-
-    loadPromise.then((params) => {
-        const result = generate(seed, params)
-        const data = generateExportData(result, params.useActualVeins)
-        self.postMessage(data)
-    })
+    void loadPromise
+        .then((params) => {
+            if (failed) return
+            const result = generate(event.data, params)
+            self.postMessage(generateExportData(result, params.useActualVeins))
+        })
+        .catch(reportError)
 }

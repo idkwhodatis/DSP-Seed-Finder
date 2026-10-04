@@ -1,15 +1,7 @@
 import styles from "~styles"
-import { A, useNavigate, useParams, useSearchParams } from "@solidjs/router"
-import {
-    Component,
-    For,
-    Match,
-    Show,
-    Switch,
-    createMemo,
-    createResource,
-    createSignal,
-} from "solid-js"
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
+import { useEffect, useMemo, useRef, type FC, type FormEvent } from "react"
+import { useLiveState } from "../hooks/useLiveState"
 import NumberInput from "../components/NumberInput"
 import Button from "../components/Button"
 import { generateGalaxy, searchStar } from "../worldgen"
@@ -47,9 +39,9 @@ function randomSeed() {
     return Math.floor(Math.random() * 1e8)
 }
 
-const Search: Component = () => {
+const Search: FC = () => {
     const [store, setStore] = useStore()
-    const [value, setValue] = createSignal<number>(-1)
+    const [value, setValue] = useLiveState<number>(-1)
     const navigate = useNavigate()
 
     function isValueValid() {
@@ -57,7 +49,7 @@ const Search: Component = () => {
         return Number.isInteger(v) && v >= 0 && v < 1e8
     }
 
-    function handleSubmit(ev: Event) {
+    function handleSubmit(ev: FormEvent<HTMLFormElement>) {
         ev.preventDefault()
         if (!isValueValid()) return
         navigate(`/galaxy/${value()}${getSearch(store.settings.view)}`)
@@ -66,63 +58,63 @@ const Search: Component = () => {
     const { t } = useLingui()
 
     return (
-        <form class={styles.search} onSubmit={handleSubmit}>
-            <div class={styles.searchTitle}>{t`Seed`}:</div>
-            <div class={styles.searchRow}>
+        <form className={styles.search} onSubmit={handleSubmit}>
+            <div className={styles.searchTitle}>{t`Seed`}:</div>
+            <div className={styles.searchRow}>
                 <NumberInput
-                    class={styles.searchInput}
+                    className={styles.searchInput}
                     value={value()}
                     onChange={setValue}
                     emptyValue={-1}
                 />
                 <Button
-                    class={styles.searchRandom}
+                    className={styles.searchRandom}
                     kind="outline"
                     onClick={() => setValue(randomSeed())}
                 >
                     {t`Random`}
                 </Button>
                 <Button
-                    class={styles.searchSubmit}
+                    className={styles.searchSubmit}
                     type="submit"
                     disabled={!isValueValid()}
                 >
                     {t`View`}
                 </Button>
             </div>
-            <div class={styles.searchTitle}>{t`Number of stars`}:</div>
+            <div className={styles.searchTitle}>{t`Number of stars`}:</div>
             <StarCountSelector
-                class={styles.searchInput}
+                className={styles.searchInput}
                 value={store.settings.view.starCount}
                 onChange={(v) => setStore("settings", "view", "starCount", v)}
             />
-            <div class={styles.searchTitle}>{t`Resource multiplier`}:</div>
+            <div className={styles.searchTitle}>{t`Resource multiplier`}:</div>
             <ResourceMultiplierSelector
-                class={styles.searchInput}
+                className={styles.searchInput}
                 value={store.settings.view.resourceMultiplier}
                 onChange={(v) =>
                     setStore("settings", "view", "resourceMultiplier", v)
                 }
             />
-            <div class={styles.searchTitle}>
+            <div className={styles.searchTitle}>
                 {t`Dark Fog initial occupation`}:
             </div>
             <HiveInitialColonizeSelector
-                class={styles.searchInput}
+                className={styles.searchInput}
                 value={store.settings.view.hiveInitialColonize}
                 onChange={(v) =>
                     setStore("settings", "view", "hiveInitialColonize", v)
                 }
             />
-            <div class={styles.searchTitle}>{t`Dark Fog max density`}:</div>
+            <div className={styles.searchTitle}>{t`Dark Fog max density`}:</div>
             <HiveMaxDensitySelector
-                class={styles.searchInput}
+                className={styles.searchInput}
                 value={store.settings.view.hiveMaxDensity}
                 onChange={(v) =>
                     setStore("settings", "view", "hiveMaxDensity", v)
                 }
             />
-            <div class={styles.searchTitle}>
+            <div className={styles.searchTitle}>
                 <Tooltip
                     text={t`It is much faster to estimate the amount of veins over generating the excat numbers.`}
                 >
@@ -140,7 +132,7 @@ const Search: Component = () => {
     )
 }
 
-const StarSearch: Component<{
+const StarSearch: FC<{
     seed: number
     params: GameParameters
     galaxy: Galaxy
@@ -150,216 +142,263 @@ const StarSearch: Component<{
     results: integer[]
     onChangeResults: (value: integer[]) => void
 }> = (props) => {
-    const isRuleValid = createMemo(() => validateRules(props.rules))
+    const isRuleValid = validateRules(props.rules)
     const { t } = useLingui()
+    const [searching, setSearching] = useLiveState(false)
+    const [failed, setFailed] = useLiveState(false)
+    const requestId = useRef(0)
+
+    useEffect(() => {
+        ++requestId.current
+        setSearching(false)
+        setFailed(false)
+        return () => {
+            ++requestId.current
+        }
+    }, [props.seed, props.params, props.rules, setSearching, setFailed])
 
     async function search() {
-        props.onChangeResults(
-            await searchStar(
+        if (searching() || !isRuleValid) return
+        const id = ++requestId.current
+        setSearching(true)
+        setFailed(false)
+        try {
+            const results = await searchStar(
                 false,
                 props.seed,
                 props.params,
                 constructRule(props.rules),
-            ),
-        )
+            )
+            if (id === requestId.current) props.onChangeResults(results)
+        } catch {
+            if (id === requestId.current) setFailed(true)
+        } finally {
+            if (id === requestId.current) setSearching(false)
+        }
     }
 
-    function buildUrl(index: integer) {
-        return `/galaxy/${props.seed}/${index}${props.searchString}`
+    function changeRules(value: SimpleRule[][]) {
+        ++requestId.current
+        setSearching(false)
+        setFailed(false)
+        props.onChangeRules(value)
+        props.onChangeResults([])
     }
 
     return (
-        <div class={styles.starSearch}>
+        <div className={styles.starSearch}>
             <div
-                class={styles.starSearchTitle}
+                className={styles.starSearchTitle}
             >{t`Find stars matching the following criteria in seed ${props.seed}.`}</div>
-            <RuleEditor
-                value={props.rules}
-                onChange={(value) => props.onChangeRules(value)}
-            />
+            <RuleEditor value={props.rules} onChange={changeRules} />
             <Button
-                class={styles.starSearchButton}
-                disabled={!isRuleValid()}
+                className={styles.starSearchButton}
+                disabled={!isRuleValid || searching()}
                 onClick={search}
-            >{t`Search`}</Button>
-            <div class={styles.results}>
-                <For each={props.results}>
-                    {(index) => (
-                        <A href={buildUrl(index)} class={styles.result}>
-                            <span>{props.galaxy.stars[index]?.name}</span>
-                            <span class={styles.resultIndex}>#{index + 1}</span>
-                        </A>
-                    )}
-                </For>
+            >
+                {searching() ? t`Searching...` : t`Search`}
+            </Button>
+            {failed() && (
+                <div role="alert">{t`Unable to search this galaxy. Please try again.`}</div>
+            )}
+            <div className={styles.results}>
+                {props.results.map((index) => (
+                    <Link
+                        key={index}
+                        to={`/galaxy/${props.seed}/${index}${props.searchString}`}
+                        className={styles.result}
+                    >
+                        <span>{props.galaxy.stars[index]?.name}</span>
+                        <span className={styles.resultIndex}>#{index + 1}</span>
+                    </Link>
+                ))}
             </div>
         </div>
     )
 }
 
-const View: Component<{ seed: number; index?: number; isSearch: boolean }> = (
+export function parseGameParameters(search: URLSearchParams): GameParameters {
+    const count = Number(search.get("count"))
+    const choose = (
+        name: string,
+        allowed: readonly number[],
+        fallback: number,
+    ) => {
+        const raw = search.get(name)
+        const value = Number(raw)
+        return raw !== null && raw !== "" && allowed.includes(value)
+            ? value
+            : fallback
+    }
+    const actual = search.get("useActualVeins")
+    return {
+        starCount:
+            Number.isInteger(count) &&
+            count >= minStarCount &&
+            count <= maxStarCount
+                ? count
+                : defaultStarCount,
+        resourceMultiplier: choose(
+            "multiplier",
+            resourceMultipliers,
+            defaultResourceMultiplier,
+        ),
+        hiveInitialColonize: choose(
+            "hiveInitialColonize",
+            hiveInitialColonizeValues,
+            defaultHiveInitialColonize,
+        ),
+        hiveMaxDensity: choose(
+            "hiveMaxDensity",
+            hiveMaxDensityValues,
+            defaultHiveMaxDensity,
+        ),
+        useActualVeins: !actual
+            ? defaultUseActualVeins
+            : defaultUseActualVeins
+              ? actual !== "0" && actual !== "false"
+              : actual === "1" || actual === "true",
+    }
+}
+
+const View: FC<{ seed: number; index?: number; isSearch: boolean }> = (
     props,
 ) => {
     const [searchParams] = useSearchParams()
-    const [exportModal, setExportModal] = createSignal(false)
-
-    const starCount = createMemo(() => {
-        const { count } = searchParams
-        if (count) {
-            const m = parseFloat(count as string)
-            if (Number.isInteger(m) && m >= minStarCount && m <= maxStarCount) {
-                return m
-            }
-        }
-        return defaultStarCount
-    })
-
-    const resourceMultiplier = createMemo(() => {
-        const { multiplier } = searchParams
-        if (multiplier) {
-            const m = parseFloat(multiplier as string)
-            if (resourceMultipliers.includes(m)) {
-                return m
-            }
-        }
-        return defaultResourceMultiplier
-    })
-
-    const hiveInitialColonize = createMemo(() => {
-        const { hiveInitialColonize } = searchParams
-        if (hiveInitialColonize) {
-            const m = parseFloat(hiveInitialColonize as string)
-            if (hiveInitialColonizeValues.includes(m)) {
-                return m
-            }
-        }
-        return defaultHiveInitialColonize
-    })
-
-    const hiveMaxDensity = createMemo(() => {
-        const { hiveMaxDensity } = searchParams
-        if (hiveMaxDensity) {
-            const m = parseFloat(hiveMaxDensity as string)
-            if (hiveMaxDensityValues.includes(m)) {
-                return m
-            }
-        }
-        return defaultHiveMaxDensity
-    })
-
-    const useActualVeins = createMemo(() => {
-        const { useActualVeins } = searchParams
-        if (useActualVeins) {
-            if (defaultUseActualVeins) {
-                return useActualVeins !== "0" && useActualVeins !== "false"
-            } else {
-                return useActualVeins === "1" || useActualVeins === "true"
-            }
-        }
-        return defaultUseActualVeins
-    })
-
-    const params = createMemo(
-        (): GameParameters => ({
-            starCount: starCount(),
-            resourceMultiplier: resourceMultiplier(),
-            hiveInitialColonize: hiveInitialColonize(),
-            hiveMaxDensity: hiveMaxDensity(),
-            useActualVeins: useActualVeins(),
-        }),
+    const params = useMemo(
+        () => parseGameParameters(searchParams),
+        [searchParams],
     )
-
-    const [galaxy] = createResource<Galaxy>(async () => {
-        const galaxy = await generateGalaxy(false, props.seed, params())
-        console.log(galaxy)
-        return galaxy
-    })
-
-    const search = createMemo(() => getSearch(params()))
-
-    function buildUrl(starIndex: integer) {
-        return `/galaxy/${props.seed}/${starIndex}${search()}`
-    }
-
-    const { t } = useLingui()
-
-    const [rules, setRules] = createSignal<SimpleRule[][]>(
-        getInitialStarSearchRules(),
+    const search = getSearch(params)
+    const key = `${props.seed}:${search}`
+    const [request, setRequest] = useLiveState<{
+        key: string
+        galaxy?: Galaxy
+        failed?: boolean
+    }>({ key: "" })
+    const [retry, setRetry] = useLiveState(0)
+    const retryNumber = retry()
+    const [exportModal, setExportModal] = useLiveState(false)
+    const [rules, setRules] = useLiveState<SimpleRule[][]>(
+        getInitialStarSearchRules,
     )
-    const [starSearchResults, setStarSearchResults] = createSignal<integer[]>(
+    const [starSearchResults, setStarSearchResults] = useLiveState<integer[]>(
         [],
     )
+    const { t } = useLingui()
+
+    useEffect(() => {
+        let active = true
+        setRequest({ key })
+        setStarSearchResults([])
+        setExportModal(false)
+        void Promise.resolve()
+            .then(() => generateGalaxy(false, props.seed, params))
+            .then((galaxy) => {
+                if (active) setRequest({ key, galaxy })
+            })
+            .catch(() => {
+                if (active) setRequest({ key, failed: true })
+            })
+        return () => {
+            active = false
+        }
+    }, [
+        props.seed,
+        params,
+        key,
+        retryNumber,
+        setRequest,
+        setStarSearchResults,
+        setExportModal,
+    ])
+
+    const current = request()
+    if (current.key === key && current.failed)
+        return (
+            <div className={styles.loading} role="alert">
+                <span>{t`Unable to generate this galaxy.`}</span>
+                <Button
+                    onClick={() => setRetry((value) => value + 1)}
+                >{t`Retry`}</Button>
+            </div>
+        )
+    if (current.key !== key || !current.galaxy)
+        return (
+            <div className={styles.loading} role="status">{t`Loading...`}</div>
+        )
+    const galaxy = current.galaxy
+    const selectedStar =
+        props.index === undefined ? undefined : galaxy.stars[props.index]
+    const buildUrl = (starIndex: integer) =>
+        `/galaxy/${props.seed}/${starIndex}${search}`
 
     return (
-        <Show
-            when={!!galaxy()}
-            fallback={<div class={styles.loading}>{t`Loading...`}</div>}
-        >
-            <div class={styles.view}>
-                <div class={styles.left}>
-                    <div class={styles.leftButtons}>
-                        <A href={`/galaxy/${props.seed}${search()}`}>
-                            <Button class={styles.button}>{t`Starmap`}</Button>
-                        </A>
+        <>
+            <div className={styles.view}>
+                <div className={styles.left}>
+                    <div className={styles.leftButtons}>
+                        <Link to={`/galaxy/${props.seed}${search}`}>
+                            <Button
+                                className={styles.button}
+                            >{t`Starmap`}</Button>
+                        </Link>
                         <Button
-                            class={styles.button}
+                            className={styles.button}
                             onClick={() => setExportModal(true)}
                         >{t`Export`}</Button>
-                        <A href={`/galaxy/${props.seed}/search${search()}`}>
-                            <Button class={styles.button}>{t`Search`}</Button>
-                        </A>
+                        <Link to={`/galaxy/${props.seed}/search${search}`}>
+                            <Button
+                                className={styles.button}
+                            >{t`Search`}</Button>
+                        </Link>
                     </div>
-                    <div class={styles.starList}>
-                        <For each={galaxy()!.stars}>
-                            {(star) => (
-                                <A
-                                    href={buildUrl(star.index)}
-                                    class={clsx(
-                                        styles.star,
-                                        star.index === props.index &&
-                                            styles.active,
-                                    )}
-                                >
-                                    <span>{star.name}</span>
-                                    <span class={styles.index}>
-                                        #{star.index + 1}
-                                    </span>
-                                </A>
-                            )}
-                        </For>
+                    <div className={styles.starList}>
+                        {galaxy.stars.map((star) => (
+                            <Link
+                                key={star.index}
+                                to={buildUrl(star.index)}
+                                className={clsx(
+                                    styles.star,
+                                    star.index === props.index && styles.active,
+                                )}
+                            >
+                                <span>{star.name}</span>
+                                <span className={styles.index}>
+                                    #{star.index + 1}
+                                </span>
+                            </Link>
+                        ))}
                     </div>
                 </div>
-                <div class={styles.right}>
-                    <Switch
-                        fallback={
-                            <GalaxyOverview
-                                galaxy={galaxy()!}
-                                search={search()}
-                            />
-                        }
-                    >
-                        <Match when={props.isSearch}>
-                            <StarSearch
-                                seed={props.seed}
-                                params={params()}
-                                galaxy={galaxy()!}
-                                searchString={search()}
-                                rules={rules()}
-                                onChangeRules={(value) => {
-                                    setRules(value)
-                                    setStarSearchRules(value)
-                                }}
-                                results={starSearchResults()}
-                                onChangeResults={setStarSearchResults}
-                            />
-                        </Match>
-                        <Match when={props.index !== undefined}>
+                <div className={styles.right}>
+                    {props.isSearch ? (
+                        <StarSearch
+                            seed={props.seed}
+                            params={params}
+                            galaxy={galaxy}
+                            searchString={search}
+                            rules={rules()}
+                            onChangeRules={(value) => {
+                                setRules(value)
+                                setStarSearchRules(value)
+                            }}
+                            results={starSearchResults()}
+                            onChangeResults={setStarSearchResults}
+                        />
+                    ) : props.index !== undefined ? (
+                        selectedStar ? (
                             <StarView
-                                star={galaxy()!.stars[props.index!]!}
-                                galaxy={galaxy()!}
+                                star={selectedStar}
+                                galaxy={galaxy}
                                 buildUrl={buildUrl}
                             />
-                        </Match>
-                    </Switch>
+                        ) : (
+                            <div role="alert">{t`Invalid star index.`}</div>
+                        )
+                    ) : (
+                        <GalaxyOverview galaxy={galaxy} search={search} />
+                    )}
                 </div>
             </div>
             <ExportModal
@@ -369,28 +408,35 @@ const View: Component<{ seed: number; index?: number; isSearch: boolean }> = (
                 id=""
                 name={String(props.seed)}
                 singleSeed={props.seed}
-                params={params()}
+                params={params}
             />
-        </Show>
+        </>
     )
 }
 
-const Galaxy: Component = () => {
+export default function Galaxy() {
     const params = useParams()
-
-    return (
-        <Show when={!!params.seed} fallback={<Search />}>
-            <View
-                seed={Number(params.seed)}
-                index={
-                    params.index !== undefined && params.index !== "search"
-                        ? Number(params.index) || 0
-                        : undefined
-                }
-                isSearch={params.index === "search"}
-            />
-        </Show>
+    const { t } = useLingui()
+    if (params.seed === undefined) return <Search />
+    const seed = Number(params.seed)
+    if (
+        !/^\d+$/.test(params.seed) ||
+        !Number.isSafeInteger(seed) ||
+        seed < 0 ||
+        seed >= 1e8
     )
+        return <div role="alert">{t`Invalid seed.`}</div>
+    const isSearch = params.index === "search"
+    const index =
+        params.index === undefined || isSearch
+            ? undefined
+            : Number(params.index)
+    if (
+        index !== undefined &&
+        (!/^\d+$/.test(params.index!) ||
+            !Number.isSafeInteger(index) ||
+            index < 0)
+    )
+        return <div role="alert">{t`Invalid star index.`}</div>
+    return <View seed={seed} index={index} isSearch={isSearch} />
 }
-
-export default Galaxy

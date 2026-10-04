@@ -1,0 +1,10 @@
+.icon {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    margin-inline-end: 4px;
+    vertical-align: -3px;
+    background-repeat: no-repeat;
+    pointer-events: none;
+}

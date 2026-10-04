@@ -41,12 +41,14 @@ export function startSearchingGalaxies(
         onError,
         ...rest
     } = options
+    let completed = false
     const pendingBatches = new Map<integer, integer[]>()
     let { nextBatchId } = options
     const onBatchResult: InternalFindOptions["onBatchResult"] = (
         batchId,
         result,
     ) => {
+        if (completed || batchId < nextBatchId) return
         if (batchId === nextBatchId) {
             const results = [...result]
             ++nextBatchId
@@ -67,7 +69,6 @@ export function startSearchingGalaxies(
             onProgress(nextBatchId)
         }
     }, autosave * 1000)
-    let completed = false
 
     const done = () => {
         completed = true
@@ -95,7 +96,12 @@ export function startSearchingGalaxies(
                 onComplete()
             }
         })
-        .catch((err) => onError(err))
+        .catch((err) => {
+            if (!completed) {
+                done()
+                onError(err)
+            }
+        })
 }
 
 export function stopSearchingGalaxies(nativeMode: boolean) {

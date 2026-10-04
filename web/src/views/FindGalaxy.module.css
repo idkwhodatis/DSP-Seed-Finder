@@ -50,3 +50,29 @@
 .viewTitle {
     margin-right: 12px;
 }
+
+.execute {
+    flex-wrap: wrap;
+}
+.progress {
+    min-width: 160px;
+}
+.viewTop {
+    flex-wrap: wrap;
+    gap: 6px;
+}
+@media (max-width: 600px) {
+    .content {
+        padding: 12px;
+    }
+    .execute {
+        padding: 10px 0;
+        gap: 8px;
+    }
+    .progress {
+        flex-basis: 100%;
+    }
+    .rules {
+        margin-top: 16px;
+    }
+}

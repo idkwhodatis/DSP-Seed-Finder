@@ -1,17 +1,9 @@
-import {
-    Component,
-    Show,
-    batch,
-    createEffect,
-    createMemo,
-    createSignal,
-    onCleanup,
-} from "solid-js"
+import { type FC, useEffect } from "react"
+import { useLiveState, useObjectState } from "../hooks/useLiveState"
 import Modal from "../components/Modal"
 import Button from "../components/Button"
 import { getMultiProfileResultRange, getProfileResultRange } from "../profile"
 import { getExporter } from "../exporter"
-import { createStore, unwrap } from "solid-js/store"
 import { TinyEmitter } from "tiny-emitter"
 import styles from "~styles"
 import StarCountSelector from "./StarCountSelector"
@@ -20,14 +12,13 @@ import NumberInput from "../components/NumberInput"
 import Tooltip from "../components/Tooltip"
 import Toggle from "../components/Toggle"
 import Select from "../components/Select"
-import { getDefaultParams } from "../util"
+import { getDefaultParams, minStarCount, maxStarCount } from "../util"
 import HiveInitialColonizeSelector from "./HiveInitialColonizeSelector"
 import HiveMaxDensitySelector from "./HiveMaxDensitySelector"
 import { useLingui } from "#lingui"
 import { useStore } from "../store"
 
 type Mode = "star" | "galaxy" | "single"
-
 interface Options extends Pick<
     ExportOptions,
     "format" | "concurrency" | "params" | "language"
@@ -35,86 +26,65 @@ interface Options extends Pick<
     start: number
     end: number
 }
-
 function formatName(name: string, format: ExportOptions["format"]) {
-    return (
-        name.replace(/\\\/:*?"<>|/g, "") +
-        "." +
-        (format === "csv" ? "zip" : format)
+    const safeName = name
+        .replace(/[\\/:*?"<>|\u0000-\u001f]/g, "")
+        .trim()
+        .replace(/[. ]+$/, "")
+    return (safeName || "export") + "." + (format === "csv" ? "zip" : format)
+}
+async function getStarResults(id: string, start: number, end: number) {
+    const results = await getProfileResultRange(id, start, end)
+    return [...new Set(results.map((result) => result.seed))]
+}
+async function getGalaxyResults(id: string, start: number, end: number) {
+    return (await getMultiProfileResultRange(id, start, end)).map(
+        (result) => result.seed,
     )
 }
-
-async function getStarResults(
-    id: string,
-    start: number,
-    end: number,
-): Promise<integer[]> {
-    const results = await getProfileResultRange(id, start, end)
-    const output: integer[] = []
-    let last: integer | undefined
-    for (const result of results) {
-        if (last !== result.seed) {
-            last = result.seed
-            output.push(last)
-        }
-    }
-    return output
-}
-
-async function getGalaxyResults(
-    id: string,
-    start: number,
-    end: number,
-): Promise<integer[]> {
-    const results = await getMultiProfileResultRange(id, start, end)
-    return results.map((r) => r.seed)
-}
-
 async function execute(
     emitter: TinyEmitter,
     mode: Mode,
     id: string,
     { start, end, format, concurrency, params, language }: Options,
+    signal: AbortSignal,
 ) {
-    const fn =
+    const getResults =
         mode === "star"
             ? getStarResults
             : mode === "galaxy"
               ? getGalaxyResults
               : () => [start]
-    const results = await fn(id, start, end)
-    if (format === "txt") {
-        const content = results.join("\n")
-        return new Blob([content], { type: "text/plain" })
-    }
+    const results = await getResults(id, start, end)
+    if (signal.aborted) return null
+    if (format === "txt")
+        return new Blob([results.join("\n")], { type: "text/plain" })
     emitter.emit("start", results.length)
-    let stopped = false
-    emitter.once("stop", () => {
-        stopped = true
-    })
     const blob = await getExporter(false)({
         format,
         concurrency,
         params,
         results,
         language,
+        signal,
         onProgress: (current) => {
-            emitter.emit("progress", current)
-            return stopped
+            if (!signal.aborted) emitter.emit("progress", current)
+            return signal.aborted
         },
-        onGenerate: () => emitter.emit("end"),
+        onGenerate: () => {
+            if (!signal.aborted) emitter.emit("end")
+        },
     })
-    return blob
+    return signal.aborted ? null : blob
 }
-
 enum Status {
     Starting,
     Progressing,
     Generating,
     Done,
+    Failed,
 }
-
-const ProgressModal: Component<{
+const ProgressModal: FC<{
     visible: boolean
     onClose: () => void
     mode: Mode
@@ -122,12 +92,11 @@ const ProgressModal: Component<{
     name: string
     id: string
 }> = (props) => {
-    const [progress, setProgress] = createSignal(0)
-    const [total, setTotal] = createSignal(0)
-    const [status, setStatus] = createSignal<Status>(Status.Done)
-    const [url, setUrl] = createSignal("")
+    const [progress, setProgress] = useLiveState(0)
+    const [total, setTotal] = useLiveState(0)
+    const [status, setStatus] = useLiveState<Status>(Status.Starting)
+    const [url, setUrl] = useLiveState("")
     const { t } = useLingui()
-
     const progressText = () => {
         switch (status()) {
             case Status.Starting:
@@ -138,88 +107,94 @@ const ProgressModal: Component<{
                 return t`Generating file`
             case Status.Done:
                 return t`Done`
+            case Status.Failed:
+                return t`Export failed. Please try again.`
         }
     }
-
-    let stop = () => {}
-
-    createEffect(() => {
-        if (props.visible) {
-            const emitter = new TinyEmitter()
-            setStatus(Status.Starting)
-            emitter.once("start", (count: integer) => {
-                batch(() => {
-                    setProgress(0)
-                    setTotal(count)
-                    setStatus(Status.Progressing)
-                })
-            })
-            emitter.on("progress", (current: integer) => {
-                setProgress(current)
-            })
-            emitter.once("end", () => {
-                setStatus(Status.Generating)
-            })
-            stop = () => emitter.emit("stop")
-            execute(emitter, props.mode, props.id, props.options).then(
-                (blob) => {
-                    if (blob) {
-                        setStatus(Status.Done)
-                        const url = URL.createObjectURL(blob)
-                        setUrl((prevUrl) => {
-                            if (prevUrl) {
-                                URL.revokeObjectURL(prevUrl)
-                            }
-                            return url
-                        })
-                    }
-                },
-            )
-        } else {
-            stop()
-            stop = () => {}
-            batch(() => {
-                setUrl((prevUrl) => {
-                    if (prevUrl) {
-                        URL.revokeObjectURL(prevUrl)
-                    }
-                    return ""
-                })
-            })
-        }
-    })
-
-    onCleanup(() => {
-        stop()
-        stop = () => {}
-        setUrl((prevUrl) => {
-            if (prevUrl) {
-                URL.revokeObjectURL(prevUrl)
+    useEffect(() => {
+        if (!props.visible) return
+        let current = true
+        let objectUrl = ""
+        const controller = new AbortController()
+        const emitter = new TinyEmitter()
+        setUrl("")
+        setProgress(0)
+        setTotal(0)
+        setStatus(Status.Starting)
+        emitter.once("start", (count: integer) => {
+            if (current) {
+                setTotal(count)
+                setStatus(Status.Progressing)
             }
-            return ""
         })
-    })
-
+        emitter.on("progress", (count: integer) => {
+            if (current) setProgress(count)
+        })
+        emitter.once("end", () => {
+            if (current) setStatus(Status.Generating)
+        })
+        void execute(
+            emitter,
+            props.mode,
+            props.id,
+            props.options,
+            controller.signal,
+        )
+            .then((blob) => {
+                if (!current || !blob) return
+                objectUrl = URL.createObjectURL(blob)
+                setUrl(objectUrl)
+                setStatus(Status.Done)
+            })
+            .catch((error) => {
+                if (current) {
+                    console.error(error)
+                    setStatus(Status.Failed)
+                }
+            })
+        return () => {
+            current = false
+            controller.abort()
+            emitter.off("start")
+            emitter.off("progress")
+            emitter.off("end")
+            if (objectUrl) URL.revokeObjectURL(objectUrl)
+        }
+    }, [
+        props.visible,
+        props.mode,
+        props.id,
+        props.options,
+        setProgress,
+        setStatus,
+        setTotal,
+        setUrl,
+    ])
     return (
         <Modal visible={props.visible}>
-            <div class={styles.progressText}>{progressText()}</div>
-            <Show when={url()}>
-                <a class={styles.download} download={props.name} href={url()}>
-                    <Button class={styles.button}>{t`Download`}</Button>
+            <div className={styles.progressText}>{progressText()}</div>
+            {url() && (
+                <a
+                    className={styles.download}
+                    download={props.name}
+                    href={url()}
+                >
+                    <Button className={styles.button}>{t`Download`}</Button>
                 </a>
-            </Show>
+            )}
             <Button
-                class={styles.button}
+                className={styles.button}
                 kind="outline"
                 onClick={props.onClose}
             >
-                {status() === Status.Done ? t`Close` : t`Stop`}
+                {status() === Status.Done || status() === Status.Failed
+                    ? t`Close`
+                    : t`Stop`}
             </Button>
         </Modal>
     )
 }
-
-const ExportModal: Component<{
+const ExportModal: FC<{
     visible: boolean
     onClose: () => void
     mode: Mode
@@ -229,45 +204,78 @@ const ExportModal: Component<{
     params: GameParameters
 }> = (props) => {
     const [store] = useStore()
-    const [options, setOptions] = createStore<Options>({
+    const [options, setOptions] = useObjectState<Options>({
         start: 0,
         end: 99999999,
         params: getDefaultParams(),
         format: "xlsx",
-        concurrency: navigator.hardwareConcurrency,
+        concurrency: navigator.hardwareConcurrency || 1,
         language: store.settings.language,
     })
     const { t } = useLingui()
-
-    const [progressModal, setProgressModal] = createSignal(false)
-
-    createEffect(() => {
-        if (props.visible) {
+    const [job, setJob] = useLiveState<{
+        mode: Mode
+        id: string
+        name: string
+        options: Options
+    } | null>(null)
+    useEffect(() => {
+        if (props.visible)
             setOptions({
                 params: { ...props.params },
                 language: store.settings.language,
                 start: props.singleSeed ?? 0,
             })
-        } else {
-            setProgressModal(false)
-        }
-    })
-
-    const filename = createMemo(() => formatName(props.name, options.format))
-
+        else setJob(null)
+    }, [
+        props.visible,
+        props.id,
+        props.singleSeed,
+        props.params,
+        store.settings.language,
+        setOptions,
+        setJob,
+    ])
+    useEffect(() => {
+        setJob(null)
+    }, [props.visible, props.mode, props.id, props.singleSeed, setJob])
+    const isValid = () =>
+        Number.isInteger(options.start) &&
+        Number.isInteger(options.end) &&
+        options.start >= 0 &&
+        options.start < 1e8 &&
+        (props.mode === "single" ||
+            (options.end >= options.start && options.end < 1e8)) &&
+        (options.format === "txt" ||
+            (Number.isInteger(options.concurrency) &&
+                options.concurrency >= 1 &&
+                Number.isInteger(options.params.starCount) &&
+                options.params.starCount >= minStarCount &&
+                options.params.starCount <= maxStarCount))
+    function onExport() {
+        if (job() || !isValid()) return
+        setJob({
+            mode: props.mode,
+            id: props.id,
+            name: formatName(props.name, options.format),
+            options: { ...options, params: { ...options.params } },
+        })
+    }
     return (
         <Modal visible={props.visible} onClose={props.onClose} backdropDismiss>
-            <div class={styles.title}>{t`Export`}</div>
-            <Show when={props.mode !== "single" && options.format !== "txt"}>
-                <div class={styles.warn}>
-                    {t`Warning: Exporting too many seeds may cause out of memory error.`}
-                </div>
-            </Show>
-            <div class={styles.fields}>
-                <div class={styles.label}>{t`Format`}</div>
-                <div class={styles.input}>
+            <div className={styles.title}>{t`Export`}</div>
+            {props.mode !== "single" && options.format !== "txt" ? (
+                <>
+                    <div className={styles.warn}>
+                        {t`Warning: Exporting too many seeds may cause out of memory error.`}
+                    </div>
+                </>
+            ) : null}
+            <div className={styles.fields}>
+                <div className={styles.label}>{t`Format`}</div>
+                <div className={styles.input}>
                     <Select
-                        class={styles.inputStandard}
+                        className={styles.inputStandard}
                         value={options.format}
                         onChange={(value) => setOptions("format", value)}
                         options={
@@ -280,135 +288,153 @@ const ExportModal: Component<{
                         }
                     />
                 </div>
-                <Show when={options.format !== "txt"}>
-                    <div class={styles.label}>{t`Number of stars`}</div>
-                    <div class={styles.input}>
-                        <StarCountSelector
-                            class={styles.inputStandard}
-                            value={options.params.starCount}
-                            onChange={(value) =>
-                                setOptions("params", "starCount", value)
-                            }
-                        />
-                    </div>
-                    <div class={styles.label}>{t`Resource multiplier`}</div>
-                    <div class={styles.input}>
-                        <ResourceMultiplierSelector
-                            class={styles.inputStandard}
-                            value={options.params.resourceMultiplier}
-                            onChange={(value) =>
-                                setOptions(
-                                    "params",
-                                    "resourceMultiplier",
-                                    value,
-                                )
-                            }
-                        />
-                    </div>
-                    <div
-                        class={styles.label}
-                    >{t`Dark Fog initial occupation`}</div>
-                    <div class={styles.input}>
-                        <HiveInitialColonizeSelector
-                            class={styles.inputStandard}
-                            value={options.params.hiveInitialColonize}
-                            onChange={(value) =>
-                                setOptions(
-                                    "params",
-                                    "hiveInitialColonize",
-                                    value,
-                                )
-                            }
-                        />
-                    </div>
-                    <div class={styles.label}>{t`Dark Fog max density`}</div>
-                    <div class={styles.input}>
-                        <HiveMaxDensitySelector
-                            class={styles.inputStandard}
-                            value={options.params.hiveMaxDensity}
-                            onChange={(value) =>
-                                setOptions("params", "hiveMaxDensity", value)
-                            }
-                        />
-                    </div>
-                    <div class={styles.label}>
-                        <Tooltip
-                            text={t`It is much faster to estimate the amount of veins over generating the excat numbers.`}
-                        >
-                            {t`Use estimated veins`}
-                        </Tooltip>
-                        :
-                    </div>
-                    <div class={styles.input}>
-                        <Toggle
-                            value={!options.params.useActualVeins}
-                            onChange={(value) =>
-                                setOptions("params", "useActualVeins", !value)
-                            }
-                        />
-                    </div>
-                </Show>
-                <Show when={props.mode !== "single"}>
-                    <div class={styles.label}>{t`Seed range`}</div>
-                    <div class={styles.input}>
-                        <NumberInput
-                            class={styles.inputSeed}
-                            value={options.start}
-                            onChange={(value) => setOptions("start", value)}
-                            emptyValue={-1}
-                            maxLength={8}
-                            error={
-                                options.start < 0 || options.start > options.end
-                            }
-                        />{" "}
-                        to{" "}
-                        <NumberInput
-                            class={styles.inputSeed}
-                            value={options.end}
-                            onChange={(value) => setOptions("end", value)}
-                            emptyValue={-1}
-                            maxLength={8}
-                            error={
-                                options.end > 1e8 || options.start > options.end
-                            }
-                        />
-                    </div>
-                </Show>
-                <Show
-                    when={props.mode !== "single" && options.format !== "txt"}
-                >
-                    <div class={styles.label}>{t`Concurrency`}</div>
-                    <div class={styles.input}>
-                        <NumberInput
-                            class={styles.inputStandard}
-                            value={options.concurrency}
-                            onChange={(value) =>
-                                setOptions("concurrency", value)
-                            }
-                            emptyValue={-1}
-                            maxLength={2}
-                            error={
-                                !Number.isInteger(options.concurrency) ||
-                                options.concurrency < 1
-                            }
-                        />
-                    </div>
-                </Show>
+                {options.format !== "txt" ? (
+                    <>
+                        <div className={styles.label}>{t`Number of stars`}</div>
+                        <div className={styles.input}>
+                            <StarCountSelector
+                                className={styles.inputStandard}
+                                value={options.params.starCount}
+                                onChange={(value) =>
+                                    setOptions("params", "starCount", value)
+                                }
+                            />
+                        </div>
+                        <div
+                            className={styles.label}
+                        >{t`Resource multiplier`}</div>
+                        <div className={styles.input}>
+                            <ResourceMultiplierSelector
+                                className={styles.inputStandard}
+                                value={options.params.resourceMultiplier}
+                                onChange={(value) =>
+                                    setOptions(
+                                        "params",
+                                        "resourceMultiplier",
+                                        value,
+                                    )
+                                }
+                            />
+                        </div>
+                        <div
+                            className={styles.label}
+                        >{t`Dark Fog initial occupation`}</div>
+                        <div className={styles.input}>
+                            <HiveInitialColonizeSelector
+                                className={styles.inputStandard}
+                                value={options.params.hiveInitialColonize}
+                                onChange={(value) =>
+                                    setOptions(
+                                        "params",
+                                        "hiveInitialColonize",
+                                        value,
+                                    )
+                                }
+                            />
+                        </div>
+                        <div
+                            className={styles.label}
+                        >{t`Dark Fog max density`}</div>
+                        <div className={styles.input}>
+                            <HiveMaxDensitySelector
+                                className={styles.inputStandard}
+                                value={options.params.hiveMaxDensity}
+                                onChange={(value) =>
+                                    setOptions(
+                                        "params",
+                                        "hiveMaxDensity",
+                                        value,
+                                    )
+                                }
+                            />
+                        </div>
+                        <div className={styles.label}>
+                            <Tooltip
+                                text={t`It is much faster to estimate the amount of veins over generating the excat numbers.`}
+                            >
+                                {t`Use estimated veins`}
+                            </Tooltip>
+                            :
+                        </div>
+                        <div className={styles.input}>
+                            <Toggle
+                                value={!options.params.useActualVeins}
+                                onChange={(value) =>
+                                    setOptions(
+                                        "params",
+                                        "useActualVeins",
+                                        !value,
+                                    )
+                                }
+                            />
+                        </div>
+                    </>
+                ) : null}
+                {props.mode !== "single" ? (
+                    <>
+                        <div className={styles.label}>{t`Seed range`}</div>
+                        <div className={styles.input}>
+                            <NumberInput
+                                className={styles.inputSeed}
+                                value={options.start}
+                                onChange={(value) => setOptions("start", value)}
+                                emptyValue={-1}
+                                maxLength={8}
+                                error={
+                                    options.start < 0 ||
+                                    options.start > options.end
+                                }
+                            />{" "}
+                            to{" "}
+                            <NumberInput
+                                className={styles.inputSeed}
+                                value={options.end}
+                                onChange={(value) => setOptions("end", value)}
+                                emptyValue={-1}
+                                maxLength={8}
+                                error={
+                                    options.end >= 1e8 ||
+                                    options.start > options.end
+                                }
+                            />
+                        </div>
+                    </>
+                ) : null}
+                {props.mode !== "single" && options.format !== "txt" ? (
+                    <>
+                        <div className={styles.label}>{t`Concurrency`}</div>
+                        <div className={styles.input}>
+                            <NumberInput
+                                className={styles.inputStandard}
+                                value={options.concurrency}
+                                onChange={(value) =>
+                                    setOptions("concurrency", value)
+                                }
+                                emptyValue={-1}
+                                maxLength={2}
+                                error={
+                                    !Number.isInteger(options.concurrency) ||
+                                    options.concurrency < 1
+                                }
+                            />
+                        </div>
+                    </>
+                ) : null}
             </div>
             <Button
-                class={styles.button}
-                onClick={() => setProgressModal(true)}
+                className={styles.button}
+                disabled={!isValid() || !!job()}
+                onClick={onExport}
             >
                 {t`Export`}
             </Button>
-            <ProgressModal
-                visible={progressModal()}
-                onClose={() => setProgressModal(false)}
-                mode={props.mode}
-                id={props.id}
-                name={filename()}
-                options={unwrap(options)}
-            />
+            {props.visible && job() && (
+                <ProgressModal
+                    visible
+                    onClose={() => setJob(null)}
+                    {...job()!}
+                />
+            )}
         </Modal>
     )
 }

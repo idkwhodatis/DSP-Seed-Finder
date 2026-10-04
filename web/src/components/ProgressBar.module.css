@@ -23,3 +23,10 @@
     width: 180px;
     flex: none;
 }
+
+.text {
+    width: auto;
+    min-width: 120px;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+}

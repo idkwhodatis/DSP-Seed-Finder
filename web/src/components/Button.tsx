@@ -1,30 +1,20 @@
-import styles from "~styles"
-import { ParentComponent } from "solid-js"
-import clsx from "clsx"
-
-const Button: ParentComponent<{
-    class?: string
-    type?: "button" | "submit" | "reset"
+import type { ComponentProps } from "react"
+import { Button as Base } from "./ui/button"
+type Props = ComponentProps<"button"> & {
     kind?: "solid" | "outline"
     theme?: "default" | "error"
-    disabled?: boolean
-    onClick?: (ev: MouseEvent) => void
-}> = (props) => {
+}
+export default function Button({ kind, theme, ...props }: Props) {
     return (
-        <button
-            type={props.type || "button"}
-            class={clsx(
-                styles.button,
-                props.class,
-                props.kind === "outline" ? styles.outline : styles.solid,
-                styles[props.theme || "default"],
-            )}
-            disabled={props.disabled}
-            onClick={(ev) => props.onClick?.(ev)}
-        >
-            {props.children}
-        </button>
+        <Base
+            variant={
+                theme === "error"
+                    ? "destructive"
+                    : kind === "outline"
+                      ? "outline"
+                      : "default"
+            }
+            {...props}
+        />
     )
 }
-
-export default Button

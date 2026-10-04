@@ -117,3 +117,52 @@
     font-size: 20px;
     margin-bottom: 8px;
 }
+
+@media (max-width: 760px) {
+    .planets {
+        flex-wrap: wrap;
+    }
+    .planet {
+        max-width: 100%;
+    }
+    .row {
+        flex-wrap: wrap;
+    }
+}
+
+.main {
+    min-width: 0;
+    flex: 1;
+}
+.column {
+    min-width: 0;
+}
+.row {
+    font-size: 16px;
+    min-width: 0;
+}
+.planet {
+    font-size: 16px;
+}
+.title {
+    font-size: 20px;
+}
+.card {
+    background: var(--muted);
+}
+@media (max-width: 900px) {
+    .view {
+        flex-direction: column;
+        height: auto;
+    }
+    .main,
+    .column {
+        overflow: visible;
+    }
+    .planets {
+        padding: 12px;
+    }
+    .nearbyRow {
+        min-width: 0;
+    }
+}

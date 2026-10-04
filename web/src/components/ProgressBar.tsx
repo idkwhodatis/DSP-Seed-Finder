@@ -1,27 +1,31 @@
-import { Component } from "solid-js"
 import styles from "~styles"
 import clsx from "clsx"
-
-const ProgressBar: Component<{
-    class?: string
+export default function ProgressBar(props: {
+    className?: string
     total: number
     current: number
-}> = (props) => (
-    <div class={clsx(styles.content, props.class)}>
-        <div class={styles.progressBar}>
+}) {
+    const total = Math.max(0, props.total)
+    const current = Math.max(0, Math.min(total, props.current))
+    return (
+        <div className={clsx(styles.content, props.className)}>
             <div
-                class={styles.inner}
-                style={{
-                    width: `${((props.current * 100) / props.total).toFixed(
-                        2,
-                    )}%`,
-                }}
-            />
+                className={styles.progressBar}
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={total}
+                aria-valuenow={current}
+            >
+                <div
+                    className={styles.inner}
+                    style={{
+                        width: total ? `${(current * 100) / total}%` : "0%",
+                    }}
+                />
+            </div>
+            <div className={styles.text}>
+                {current} / {total}
+            </div>
         </div>
-        <div class={styles.text}>
-            {props.current} / {props.total}
-        </div>
-    </div>
-)
-
-export default ProgressBar
+    )
+}

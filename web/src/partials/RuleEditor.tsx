@@ -1,4 +1,5 @@
-import { Component, Index, Match, Show, Switch } from "solid-js"
+import GameIcon from "../components/GameIcon"
+import { type FC, Fragment } from "react"
 import {
     ConditionType,
     GasType,
@@ -10,7 +11,7 @@ import {
 } from "../enums"
 import styles from "~styles"
 import Select from "../components/Select"
-import { IoTrash } from "solid-icons/io"
+import { Trash2 as IoTrash } from "lucide-react"
 import Button from "../components/Button"
 import NumberInput from "../components/NumberInput"
 import clsx from "clsx"
@@ -23,8 +24,7 @@ import {
     usePlanetTypeNames,
     useConditionTypeNames,
 } from "../names"
-
-const SelectSimpleRule: Component<{
+const SelectSimpleRule: FC<{
     value?: SimpleRule
     onChange: (rule: SimpleRule) => void
     disabled?: boolean
@@ -33,7 +33,7 @@ const SelectSimpleRule: Component<{
     const ruleNames = useRuleNames()
     return (
         <Select
-            class={styles.selectRule}
+            className={styles.selectRule}
             value={
                 props.value?.type === RuleType.None ? undefined : props.value
             }
@@ -47,12 +47,11 @@ const SelectSimpleRule: Component<{
         />
     )
 }
-
-const ConditionInput: Component<{
+const ConditionInput: FC<{
     value: Condition
     onChange: (value: Condition) => void
     disabled?: boolean
-    class?: string
+    className?: string
     error?: boolean
     emptyValue: number
     maxLength?: number
@@ -61,9 +60,14 @@ const ConditionInput: Component<{
     return (
         <>
             <Select
-                class={styles.selectConditionType}
+                className={styles.selectConditionType}
                 value={props.value.type}
-                onChange={(type) => props.onChange({ ...props.value, type })}
+                onChange={(type) =>
+                    props.onChange({
+                        ...props.value,
+                        type,
+                    })
+                }
                 options={[
                     ConditionType.Gte,
                     ConditionType.Lte,
@@ -73,9 +77,14 @@ const ConditionInput: Component<{
                 disabled={props.disabled}
             />{" "}
             <NumberInput
-                class={props.class}
+                className={props.className}
                 value={props.value.value}
-                onChange={(value) => props.onChange({ ...props.value, value })}
+                onChange={(value) =>
+                    props.onChange({
+                        ...props.value,
+                        value,
+                    })
+                }
                 emptyValue={props.emptyValue}
                 disabled={props.disabled}
                 maxLength={props.maxLength}
@@ -84,20 +93,22 @@ const ConditionInput: Component<{
         </>
     )
 }
-
-const EditLuminosity: Component<{
+const EditLuminosity: FC<{
     value: Rule.Luminosity
     onChange: (value: Rule.Luminosity) => void
     disabled?: boolean
 }> = (props) => {
     const condition = () => props.value.condition
     const setCondition = (condition: Condition) =>
-        props.onChange({ ...props.value, condition })
+        props.onChange({
+            ...props.value,
+            condition,
+        })
     return (
         <Trans>
             Is{" "}
             <ConditionInput
-                class={styles.inputLuminosity}
+                className={styles.inputLuminosity}
                 value={condition()}
                 onChange={setCondition}
                 emptyValue={-1}
@@ -108,20 +119,22 @@ const EditLuminosity: Component<{
         </Trans>
     )
 }
-
-const EditDysonRadius: Component<{
+const EditDysonRadius: FC<{
     value: Rule.DysonRadius
     onChange: (value: Rule.DysonRadius) => void
     disabled?: boolean
 }> = (props) => {
     const condition = () => props.value.condition
     const setCondition = (condition: Condition) =>
-        props.onChange({ ...props.value, condition })
+        props.onChange({
+            ...props.value,
+            condition,
+        })
     return (
         <Trans>
             Is{" "}
             <ConditionInput
-                class={styles.inputDyson}
+                className={styles.inputDyson}
                 maxLength={6}
                 value={condition()}
                 onChange={setCondition}
@@ -133,8 +146,7 @@ const EditDysonRadius: Component<{
         </Trans>
     )
 }
-
-const EditAverageVeinAmount: Component<{
+const EditAverageVeinAmount: FC<{
     value: Rule.AverageVeinAmount
     onChange: (value: Rule.AverageVeinAmount) => void
     disabled?: boolean
@@ -142,28 +154,42 @@ const EditAverageVeinAmount: Component<{
     const { t } = useLingui()
     const condition = () => props.value.condition
     const setCondition = (condition: Condition) =>
-        props.onChange({ ...props.value, condition })
+        props.onChange({
+            ...props.value,
+            condition,
+        })
     const veinNames = useVeinNames()
     return (
         <>
             <Trans>
                 Has{" "}
                 <Select
-                    class={styles.selectVein}
+                    className={styles.selectVein}
                     value={props.value.vein}
                     onChange={(vein) =>
-                        props.onChange({ ...props.value, vein })
+                        props.onChange({
+                            ...props.value,
+                            vein,
+                        })
                     }
                     options={veins}
-                    getLabel={(vein) => veinNames[vein]()}
+                    getLabel={(vein) => (
+                        <>
+                            <GameIcon vein={vein} />
+                            {veinNames[vein]()}
+                        </>
+                    )}
                     disabled={props.disabled}
                 />{" "}
                 and the{" "}
                 <Select
-                    class={styles.selectVeinUseActual}
+                    className={styles.selectVeinUseActual}
                     value={!!props.value.useActual}
                     onChange={(useActual) =>
-                        props.onChange({ ...props.value, useActual })
+                        props.onChange({
+                            ...props.value,
+                            useActual,
+                        })
                     }
                     options={[false, true]}
                     getLabel={(useActual) =>
@@ -173,7 +199,7 @@ const EditAverageVeinAmount: Component<{
                 />{" "}
                 amount is{" "}
                 <ConditionInput
-                    class={styles.inputVein}
+                    className={styles.inputVein}
                     value={condition()}
                     onChange={setCondition}
                     emptyValue={-1}
@@ -183,17 +209,18 @@ const EditAverageVeinAmount: Component<{
             </Trans>
             {props.value.vein === VeinType.Oil ? " /s" : " "}
             {"  "}
-            <Show when={props.value.useActual}>
-                <br />
-                <span
-                    class={styles.veinWarning}
-                >{t`Warning: using actual values is much slower.`}</span>
-            </Show>
+            {props.value.useActual ? (
+                <>
+                    <br />
+                    <span
+                        className={styles.veinWarning}
+                    >{t`Warning: using actual values is much slower.`}</span>
+                </>
+            ) : null}
         </>
     )
 }
-
-const EditSpectr: Component<{
+const EditSpectr: FC<{
     value: Rule.Spectr
     onChange: (value: Rule.Spectr) => void
     disabled?: boolean
@@ -202,10 +229,13 @@ const EditSpectr: Component<{
         <Trans>
             Is a{" "}
             <Select
-                class={styles.selectSpectr}
+                className={styles.selectSpectr}
                 value={props.value.spectr[0]}
                 onChange={(spectr) =>
-                    props.onChange({ ...props.value, spectr: [spectr] })
+                    props.onChange({
+                        ...props.value,
+                        spectr: [spectr],
+                    })
                 }
                 options={spectrs}
                 getLabel={(spectr) => spectr}
@@ -215,20 +245,22 @@ const EditSpectr: Component<{
         </Trans>
     )
 }
-
-const EditTidalLockCount: Component<{
+const EditTidalLockCount: FC<{
     value: Rule.TidalLockCount
     onChange: (value: Rule.TidalLockCount) => void
     disabled?: boolean
 }> = (props) => {
     const condition = () => props.value.condition
     const setCondition = (condition: Condition) =>
-        props.onChange({ ...props.value, condition })
+        props.onChange({
+            ...props.value,
+            condition,
+        })
     return (
         <Trans>
             Has{" "}
             <ConditionInput
-                class={styles.inputCount}
+                className={styles.inputCount}
                 value={condition()}
                 onChange={setCondition}
                 emptyValue={-1}
@@ -239,8 +271,7 @@ const EditTidalLockCount: Component<{
         </Trans>
     )
 }
-
-const EditOceanType: Component<{
+const EditOceanType: FC<{
     value: Rule.OceanType
     onChange: (value: Rule.OceanType) => void
     disabled?: boolean
@@ -250,23 +281,30 @@ const EditOceanType: Component<{
         <Trans>
             Has planets with{" "}
             <Select
-                class={styles.selectOcean}
+                className={styles.selectOcean}
                 value={props.value.oceanType}
                 onChange={(oceanType) =>
-                    props.onChange({ ...props.value, oceanType })
+                    props.onChange({
+                        ...props.value,
+                        oceanType,
+                    })
                 }
                 options={oceans}
-                getLabel={(oceanType) =>
-                    oceanType === OceanType.Water ? t`Water` : t`Sulfuric Acid`
-                }
+                getLabel={(oceanType) => (
+                    <>
+                        <GameIcon ocean={oceanType} />
+                        {oceanType === OceanType.Water
+                            ? t`Water`
+                            : t`Sulfuric Acid`}
+                    </>
+                )}
                 disabled={props.disabled}
             />{" "}
             Ocean
         </Trans>
     )
 }
-
-const EditStarType: Component<{
+const EditStarType: FC<{
     value: Rule.StarType
     onChange: (value: Rule.StarType) => void
     disabled?: boolean
@@ -276,10 +314,13 @@ const EditStarType: Component<{
         <Trans>
             Is a{" "}
             <Select
-                class={styles.selectStarType}
+                className={styles.selectStarType}
                 value={props.value.starType[0]}
                 onChange={(starType) =>
-                    props.onChange({ ...props.value, starType: [starType] })
+                    props.onChange({
+                        ...props.value,
+                        starType: [starType],
+                    })
                 }
                 options={starTypes}
                 getLabel={(starType) => starTypeNames[starType]()}
@@ -288,21 +329,23 @@ const EditStarType: Component<{
         </Trans>
     )
 }
-
-const EditGasCount: Component<{
+const EditGasCount: FC<{
     value: Rule.GasCount
     onChange: (value: Rule.GasCount) => void
     disabled?: boolean
 }> = (props) => {
     const condition = () => props.value.condition
     const setCondition = (condition: Condition) =>
-        props.onChange({ ...props.value, condition })
+        props.onChange({
+            ...props.value,
+            condition,
+        })
     const { t } = useLingui()
     return (
         <Trans>
             Has{" "}
             <ConditionInput
-                class={styles.inputCount}
+                className={styles.inputCount}
                 value={condition()}
                 onChange={setCondition}
                 emptyValue={-1}
@@ -310,9 +353,14 @@ const EditGasCount: Component<{
                 disabled={props.disabled}
             />{" "}
             <Select
-                class={styles.selectGas}
+                className={styles.selectGas}
                 value={props.value.ice}
-                onChange={(ice) => props.onChange({ ...props.value, ice })}
+                onChange={(ice) =>
+                    props.onChange({
+                        ...props.value,
+                        ice,
+                    })
+                }
                 options={[null, false, true]}
                 getLabel={(ice) =>
                     ice === null ? t`gas/ice` : ice ? t`ice` : t`gas`
@@ -323,20 +371,22 @@ const EditGasCount: Component<{
         </Trans>
     )
 }
-
-const EditSatelliteCount: Component<{
+const EditSatelliteCount: FC<{
     value: Rule.SatelliteCount
     onChange: (value: Rule.SatelliteCount) => void
     disabled?: boolean
 }> = (props) => {
     const condition = () => props.value.condition
     const setCondition = (condition: Condition) =>
-        props.onChange({ ...props.value, condition })
+        props.onChange({
+            ...props.value,
+            condition,
+        })
     return (
         <Trans>
             Has{" "}
             <ConditionInput
-                class={styles.inputCount}
+                className={styles.inputCount}
                 value={condition()}
                 onChange={setCondition}
                 emptyValue={-1}
@@ -347,21 +397,23 @@ const EditSatelliteCount: Component<{
         </Trans>
     )
 }
-
-const EditPlanetCount: Component<{
+const EditPlanetCount: FC<{
     value: Rule.PlanetCount
     onChange: (value: Rule.PlanetCount) => void
     disabled?: boolean
 }> = (props) => {
     const condition = () => props.value.condition
     const setCondition = (condition: Condition) =>
-        props.onChange({ ...props.value, condition })
+        props.onChange({
+            ...props.value,
+            condition,
+        })
     const { t } = useLingui()
     return (
         <Trans>
             Has{" "}
             <ConditionInput
-                class={styles.inputCount}
+                className={styles.inputCount}
                 value={condition()}
                 onChange={setCondition}
                 emptyValue={-1}
@@ -370,10 +422,13 @@ const EditPlanetCount: Component<{
             />{" "}
             planets,{" "}
             <Select
-                class={styles.selectGasType}
+                className={styles.selectGasType}
                 value={props.value.excludeGiant}
                 onChange={(excludeGiant) =>
-                    props.onChange({ ...props.value, excludeGiant })
+                    props.onChange({
+                        ...props.value,
+                        excludeGiant,
+                    })
                 }
                 options={[false, true]}
                 getLabel={(excludeGiant) =>
@@ -385,20 +440,22 @@ const EditPlanetCount: Component<{
         </Trans>
     )
 }
-
-const EditBirthDistance: Component<{
+const EditBirthDistance: FC<{
     value: Rule.BirthDistance
     onChange: (value: Rule.BirthDistance) => void
     disabled?: boolean
 }> = (props) => {
     const condition = () => props.value.condition
     const setCondition = (condition: Condition) =>
-        props.onChange({ ...props.value, condition })
+        props.onChange({
+            ...props.value,
+            condition,
+        })
     return (
         <Trans>
             Is{" "}
             <ConditionInput
-                class={styles.inputDistance}
+                className={styles.inputDistance}
                 value={condition()}
                 onChange={setCondition}
                 emptyValue={-1}
@@ -409,21 +466,23 @@ const EditBirthDistance: Component<{
         </Trans>
     )
 }
-
-const EditXDistance: Component<{
+const EditXDistance: FC<{
     value: Rule.XDistance
     onChange: (value: Rule.XDistance) => void
     disabled?: boolean
 }> = (props) => {
     const condition = () => props.value.condition
     const setCondition = (condition: Condition) =>
-        props.onChange({ ...props.value, condition })
+        props.onChange({
+            ...props.value,
+            condition,
+        })
     const { t } = useLingui()
     return (
         <Trans>
             Is{" "}
             <ConditionInput
-                class={styles.inputDistance}
+                className={styles.inputDistance}
                 value={condition()}
                 onChange={setCondition}
                 emptyValue={-1}
@@ -432,9 +491,14 @@ const EditXDistance: Component<{
             />{" "}
             ly away from{" "}
             <Select
-                class={styles.selectAllOrAny}
+                className={styles.selectAllOrAny}
                 value={!!props.value.all}
-                onChange={(all) => props.onChange({ ...props.value, all })}
+                onChange={(all) =>
+                    props.onChange({
+                        ...props.value,
+                        all,
+                    })
+                }
                 options={[false, true]}
                 getLabel={(all) => (all ? t`all` : t`any`)}
                 disabled={props.disabled}
@@ -443,23 +507,28 @@ const EditXDistance: Component<{
         </Trans>
     )
 }
-
-const EditSpectrDistance: Component<{
+const EditSpectrDistance: FC<{
     value: Rule.SpectrDistance
     onChange: (value: Rule.SpectrDistance) => void
     disabled?: boolean
 }> = (props) => {
     const countCondition = () => props.value.countCondition
     const setCountCondition = (countCondition: Condition) =>
-        props.onChange({ ...props.value, countCondition })
+        props.onChange({
+            ...props.value,
+            countCondition,
+        })
     const distanceCondition = () => props.value.distanceCondition
     const setDistanceCondition = (distanceCondition: Condition) =>
-        props.onChange({ ...props.value, distanceCondition })
+        props.onChange({
+            ...props.value,
+            distanceCondition,
+        })
     return (
         <Trans>
             Has{" "}
             <ConditionInput
-                class={styles.inputCount}
+                className={styles.inputCount}
                 value={countCondition()}
                 onChange={setCountCondition}
                 emptyValue={-1}
@@ -467,10 +536,13 @@ const EditSpectrDistance: Component<{
                 disabled={props.disabled}
             />{" "}
             <Select
-                class={styles.selectSpectr}
+                className={styles.selectSpectr}
                 value={props.value.spectr}
                 onChange={(spectr) =>
-                    props.onChange({ ...props.value, spectr })
+                    props.onChange({
+                        ...props.value,
+                        spectr,
+                    })
                 }
                 options={spectrs}
                 getLabel={(spectr) => spectr}
@@ -478,7 +550,7 @@ const EditSpectrDistance: Component<{
             />{" "}
             type stars that are{" "}
             <ConditionInput
-                class={styles.inputDistance}
+                className={styles.inputDistance}
                 value={distanceCondition()}
                 onChange={setDistanceCondition}
                 emptyValue={-1}
@@ -489,32 +561,42 @@ const EditSpectrDistance: Component<{
         </Trans>
     )
 }
-
-const EditGasRate: Component<{
+const EditGasRate: FC<{
     value: Rule.GasRate
     onChange: (value: Rule.GasRate) => void
     disabled?: boolean
 }> = (props) => {
     const condition = () => props.value.condition
     const setCondition = (condition: Condition) =>
-        props.onChange({ ...props.value, condition })
+        props.onChange({
+            ...props.value,
+            condition,
+        })
     const gasTypeNames = useGasTypeNames()
     return (
         <Trans>
             Has{" "}
             <Select
-                class={styles.selectGasType}
+                className={styles.selectGasType}
                 value={props.value.gasType}
                 onChange={(gasType) =>
-                    props.onChange({ ...props.value, gasType })
+                    props.onChange({
+                        ...props.value,
+                        gasType,
+                    })
                 }
                 options={gasTypes}
-                getLabel={(vein) => gasTypeNames[vein]()}
+                getLabel={(gasType) => (
+                    <>
+                        <GameIcon gas={gasType} />
+                        {gasTypeNames[gasType]()}
+                    </>
+                )}
                 disabled={props.disabled}
             />{" "}
             and{" "}
             <ConditionInput
-                class={styles.inputGasRate}
+                className={styles.inputGasRate}
                 value={condition()}
                 onChange={setCondition}
                 emptyValue={-1}
@@ -525,21 +607,23 @@ const EditGasRate: Component<{
         </Trans>
     )
 }
-
-const EditPlanetInDysonCount: Component<{
+const EditPlanetInDysonCount: FC<{
     value: Rule.PlanetInDysonCount
     onChange: (value: Rule.PlanetInDysonCount) => void
     disabled?: boolean
 }> = (props) => {
     const condition = () => props.value.condition
     const setCondition = (condition: Condition) =>
-        props.onChange({ ...props.value, condition })
+        props.onChange({
+            ...props.value,
+            condition,
+        })
     const { t } = useLingui()
     return (
         <Trans>
             Has{" "}
             <ConditionInput
-                class={styles.inputCount}
+                className={styles.inputCount}
                 value={condition()}
                 onChange={setCondition}
                 emptyValue={-1}
@@ -548,10 +632,13 @@ const EditPlanetInDysonCount: Component<{
             />{" "}
             planet(s) within Max dyson sphere radius,{" "}
             <Select
-                class={styles.selectGasType}
+                className={styles.selectGasType}
                 value={props.value.includeGiant}
                 onChange={(includeGiant) =>
-                    props.onChange({ ...props.value, includeGiant })
+                    props.onChange({
+                        ...props.value,
+                        includeGiant,
+                    })
                 }
                 options={[false, true]}
                 getLabel={(includeGiant) =>
@@ -563,12 +650,10 @@ const EditPlanetInDysonCount: Component<{
         </Trans>
     )
 }
-
 const themeIds = [
     16, 14, 19, 11, 7, 10, 12, 17, 24, 9, 1, 20, 23, 25, 15, 18, 22, 6, 13, 8,
 ]
-
-const EditThemeId: Component<{
+const EditThemeId: FC<{
     value: Rule.ThemeId
     onChange: (value: Rule.ThemeId) => void
     disabled?: boolean
@@ -578,10 +663,13 @@ const EditThemeId: Component<{
     return (
         <Trans>
             <Select
-                class={styles.selectThemeNegate}
+                className={styles.selectThemeNegate}
                 value={!!props.value.negate}
                 onChange={(negate) =>
-                    props.onChange({ ...props.value, negate })
+                    props.onChange({
+                        ...props.value,
+                        negate,
+                    })
                 }
                 options={[false, true]}
                 getLabel={(negate) => (negate ? t`Does not have` : t`Has`)}
@@ -589,10 +677,13 @@ const EditThemeId: Component<{
             />{" "}
             a{" "}
             <Select
-                class={styles.selectPlanetType}
+                className={styles.selectPlanetType}
                 value={props.value.themeIds[0]!}
                 onChange={(themeId) =>
-                    props.onChange({ ...props.value, themeIds: [themeId] })
+                    props.onChange({
+                        ...props.value,
+                        themeIds: [themeId],
+                    })
                 }
                 options={themeIds}
                 getLabel={(themeId) => planetTypes[themeId]!()}
@@ -602,23 +693,28 @@ const EditThemeId: Component<{
         </Trans>
     )
 }
-
-const EditHiveCount: Component<{
+const EditHiveCount: FC<{
     value: Rule.HiveCount
     onChange: (value: Rule.HiveCount) => void
     disabled?: boolean
 }> = (props) => {
     const condition = () => props.value.condition
     const setCondition = (condition: Condition) =>
-        props.onChange({ ...props.value, condition })
+        props.onChange({
+            ...props.value,
+            condition,
+        })
     const { t } = useLingui()
     return (
         <Trans>
             <Select
-                class={styles.selectInitialOrMax}
+                className={styles.selectInitialOrMax}
                 value={!!props.value.initial}
                 onChange={(initial) =>
-                    props.onChange({ ...props.value, initial })
+                    props.onChange({
+                        ...props.value,
+                        initial,
+                    })
                 }
                 options={[true, false]}
                 getLabel={(initial) => (initial ? t`Initial` : t`Max`)}
@@ -626,7 +722,7 @@ const EditHiveCount: Component<{
             />{" "}
             number of hives is{" "}
             <ConditionInput
-                class={styles.inputCount}
+                className={styles.inputCount}
                 value={condition()}
                 onChange={setCondition}
                 emptyValue={-1}
@@ -637,120 +733,97 @@ const EditHiveCount: Component<{
         </Trans>
     )
 }
-
-function isType<T extends SimpleRule, K extends RuleType>(
-    rule: T,
-    type: K,
-): T extends { type: K } ? T | false : never {
-    return rule.type === type ? (rule as any) : (false as any)
-}
-
-const EditSimpleRule: Component<{
+const EditSimpleRule: FC<{
     value: SimpleRule
     onChange: (value: SimpleRule) => void
     disabled?: boolean
 }> = (props) => {
     const { t } = useLingui()
-    return (
-        <div class={styles.editRow}>
-            <Switch>
-                <Match when={isType(props.value, RuleType.Luminosity)}>
-                    {(value) => <EditLuminosity {...props} value={value()} />}
-                </Match>
-                <Match when={isType(props.value, RuleType.DysonRadius)}>
-                    {(value) => <EditDysonRadius {...props} value={value()} />}
-                </Match>
-                <Match when={isType(props.value, RuleType.AverageVeinAmount)}>
-                    {(value) => (
-                        <EditAverageVeinAmount {...props} value={value()} />
-                    )}
-                </Match>
-                <Match when={isType(props.value, RuleType.Spectr)}>
-                    {(value) => <EditSpectr {...props} value={value()} />}
-                </Match>
-                <Match when={isType(props.value, RuleType.TidalLockCount)}>
-                    {(value) => (
-                        <EditTidalLockCount {...props} value={value()} />
-                    )}
-                </Match>
-                <Match when={isType(props.value, RuleType.OceanType)}>
-                    {(value) => <EditOceanType {...props} value={value()} />}
-                </Match>
-                <Match when={isType(props.value, RuleType.StarType)}>
-                    {(value) => <EditStarType {...props} value={value()} />}
-                </Match>
-                <Match when={isType(props.value, RuleType.GasCount)}>
-                    {(value) => <EditGasCount {...props} value={value()} />}
-                </Match>
-                <Match when={isType(props.value, RuleType.SatelliteCount)}>
-                    {(value) => (
-                        <EditSatelliteCount {...props} value={value()} />
-                    )}
-                </Match>
-                <Match when={isType(props.value, RuleType.DysonRadius)}>
-                    {(value) => <EditDysonRadius {...props} value={value()} />}
-                </Match>
-                <Match when={isType(props.value, RuleType.PlanetCount)}>
-                    {(value) => <EditPlanetCount {...props} value={value()} />}
-                </Match>
-                <Match when={isType(props.value, RuleType.BirthDistance)}>
-                    {(value) => (
-                        <EditBirthDistance {...props} value={value()} />
-                    )}
-                </Match>
-                <Match when={isType(props.value, RuleType.XDistance)}>
-                    {(value) => <EditXDistance {...props} value={value()} />}
-                </Match>
-                <Match when={isType(props.value, RuleType.SpectrDistance)}>
-                    {(value) => (
-                        <EditSpectrDistance {...props} value={value()} />
-                    )}
-                </Match>
-                <Match when={isType(props.value, RuleType.GasRate)}>
-                    {(value) => <EditGasRate {...props} value={value()} />}
-                </Match>
-                <Match when={isType(props.value, RuleType.PlanetInDysonCount)}>
-                    {(value) => (
-                        <EditPlanetInDysonCount {...props} value={value()} />
-                    )}
-                </Match>
-                <Match when={isType(props.value, RuleType.ThemeId)}>
-                    {(value) => <EditThemeId {...props} value={value()} />}
-                </Match>
-                <Match when={isType(props.value, RuleType.HiveCount)}>
-                    {(value) => <EditHiveCount {...props} value={value()} />}
-                </Match>
-                <Match when={isType(props.value, RuleType.Birth)}>
-                    <div class={styles.birth}>{t`Is the Starting system`}</div>
-                </Match>
-            </Switch>
-        </div>
-    )
+    const value = props.value
+    const renderEditor = () => {
+        switch (value.type) {
+            case RuleType.Luminosity:
+                return <EditLuminosity {...props} value={value} />
+            case RuleType.DysonRadius:
+                return <EditDysonRadius {...props} value={value} />
+            case RuleType.AverageVeinAmount:
+                return <EditAverageVeinAmount {...props} value={value} />
+            case RuleType.Spectr:
+                return <EditSpectr {...props} value={value} />
+            case RuleType.TidalLockCount:
+                return <EditTidalLockCount {...props} value={value} />
+            case RuleType.OceanType:
+                return <EditOceanType {...props} value={value} />
+            case RuleType.StarType:
+                return <EditStarType {...props} value={value} />
+            case RuleType.GasCount:
+                return <EditGasCount {...props} value={value} />
+            case RuleType.SatelliteCount:
+                return <EditSatelliteCount {...props} value={value} />
+            case RuleType.PlanetCount:
+                return <EditPlanetCount {...props} value={value} />
+            case RuleType.BirthDistance:
+                return <EditBirthDistance {...props} value={value} />
+            case RuleType.XDistance:
+                return <EditXDistance {...props} value={value} />
+            case RuleType.SpectrDistance:
+                return <EditSpectrDistance {...props} value={value} />
+            case RuleType.GasRate:
+                return <EditGasRate {...props} value={value} />
+            case RuleType.PlanetInDysonCount:
+                return <EditPlanetInDysonCount {...props} value={value} />
+            case RuleType.ThemeId:
+                return <EditThemeId {...props} value={value} />
+            case RuleType.HiveCount:
+                return <EditHiveCount {...props} value={value} />
+            case RuleType.Birth:
+                return (
+                    <div
+                        className={styles.birth}
+                    >{t`Is the Starting system`}</div>
+                )
+            default:
+                return null
+        }
+    }
+    return <div className={styles.editRow}>{renderEditor()}</div>
 }
-
-const DeleteButton: Component<{ onDelete: () => void }> = (props) => {
+const DeleteButton: FC<{
+    onDelete: () => void
+}> = (props) => {
+    const { t } = useLingui()
     return (
-        <div class={styles.delete} onClick={() => props.onDelete()}>
+        <button
+            type="button"
+            aria-label={t`Delete rule`}
+            className={styles.delete}
+            style={{ background: "transparent", border: 0 }}
+            onClick={() => props.onDelete()}
+        >
             <IoTrash />
-        </div>
+        </button>
     )
 }
-
-const EmptyRow: Component<{
+const EmptyRow: FC<{
     onChange: (rule: SimpleRule) => void
     onDelete?: () => void
+    disabled?: boolean
 }> = (props) => {
     return (
-        <div class={styles.row}>
-            <SelectSimpleRule onChange={props.onChange} />
-            <Show when={!!props.onDelete}>
-                <DeleteButton onDelete={() => props.onDelete?.()} />
-            </Show>
+        <div className={styles.row}>
+            <SelectSimpleRule
+                onChange={props.onChange}
+                disabled={props.disabled}
+            />
+            {!!props.onDelete && !props.disabled ? (
+                <>
+                    <DeleteButton onDelete={() => props.onDelete?.()} />
+                </>
+            ) : null}
         </div>
     )
 }
-
-const RuleBlockContent: Component<{
+const RuleBlockContent: FC<{
     value: SimpleRule[]
     onChange: (value: SimpleRule[]) => void
     disabled?: boolean
@@ -763,57 +836,78 @@ const RuleBlockContent: Component<{
         props.onChange(props.value.filter((_, i) => i !== index))
     }
     function onAdd() {
-        props.onChange([...props.value, { type: RuleType.None }])
+        props.onChange([
+            ...props.value,
+            {
+                type: RuleType.None,
+            },
+        ])
     }
     const { t } = useLingui()
-    return (
-        <Show
-            when={props.value.length > 0}
-            fallback={
-                <EmptyRow
-                    onChange={(rule) => props.onChange([rule])}
-                    onDelete={props.onDelete}
-                />
-            }
-        >
-            <Index each={props.value}>
-                {(item, index) => (
-                    <>
-                        <Show when={index > 0}>
-                            <div class={styles.or}>{t`OR`}</div>
-                        </Show>
-                        <div class={styles.row}>
-                            <SelectSimpleRule
-                                value={item()}
-                                onChange={(rule) => onChange(rule, index)}
-                                disabled={props.disabled}
-                            />
-                            <EditSimpleRule
-                                value={item()}
-                                onChange={(rule) => onChange(rule, index)}
-                                disabled={props.disabled}
-                            />
-                            <Show when={!props.disabled}>
-                                <DeleteButton
-                                    onDelete={() => onDelete(index)}
-                                />
-                            </Show>
-                        </div>
-                    </>
-                )}
-            </Index>
+    return props.value.length > 0 ? (
+        <>
+            {props.value.map((_item, index) => {
+                const item = () => _item
+                return (
+                    <Fragment key={index}>
+                        {
+                            <>
+                                {index > 0 ? (
+                                    <>
+                                        <div className={styles.or}>{t`OR`}</div>
+                                    </>
+                                ) : null}
+                                <div className={styles.row}>
+                                    <SelectSimpleRule
+                                        value={item()}
+                                        onChange={(rule) =>
+                                            onChange(rule, index)
+                                        }
+                                        disabled={props.disabled}
+                                    />
+                                    <EditSimpleRule
+                                        value={item()}
+                                        onChange={(rule) =>
+                                            onChange(rule, index)
+                                        }
+                                        disabled={props.disabled}
+                                    />
+                                    {!props.disabled ? (
+                                        <>
+                                            <DeleteButton
+                                                onDelete={() => onDelete(index)}
+                                            />
+                                        </>
+                                    ) : null}
+                                </div>
+                            </>
+                        }
+                    </Fragment>
+                )
+            })}
 
-            <Show when={!props.disabled}>
-                <Button class={styles.addOr} kind="outline" onClick={onAdd}>
-                    {t`Add OR rule`}
-                </Button>
-            </Show>
-        </Show>
+            {!props.disabled ? (
+                <>
+                    <Button
+                        className={styles.addOr}
+                        kind="outline"
+                        onClick={onAdd}
+                    >
+                        {t`Add OR rule`}
+                    </Button>
+                </>
+            ) : null}
+        </>
+    ) : (
+        <EmptyRow
+            onChange={(rule) => props.onChange([rule])}
+            onDelete={props.onDelete}
+            disabled={props.disabled}
+        />
     )
 }
-
-const RuleEditor: Component<{
-    class?: string
+const RuleEditor: FC<{
+    className?: string
     value: SimpleRule[][]
     onChange: (value: SimpleRule[][]) => void
     disabled?: boolean
@@ -821,7 +915,6 @@ const RuleEditor: Component<{
     function onDelete(index: number) {
         props.onChange(props.value.filter((_, i) => i !== index))
     }
-
     function onBlockChange(group: SimpleRule[], index: number) {
         if (group.length > 0) {
             props.onChange(props.value.map((v, i) => (i === index ? group : v)))
@@ -829,65 +922,71 @@ const RuleEditor: Component<{
             onDelete(index)
         }
     }
-
     function onAdd() {
         props.onChange([...props.value, []])
     }
-
     const { t } = useLingui()
-
     return (
-        <div class={clsx(styles.ruleBuilder, props.class)}>
-            <Show
-                when={props.value.length > 0}
-                fallback={
-                    <div class={styles.block}>
-                        <EmptyRow
-                            onChange={(rule) => props.onChange([[rule]])}
-                        />
-                    </div>
-                }
-            >
-                <Index each={props.value}>
-                    {(group, index) => (
-                        <>
-                            <Show when={index > 0}>
-                                <div class={styles.and}>{t`AND`}</div>
-                            </Show>
-                            <div class={styles.block}>
-                                <RuleBlockContent
-                                    value={group()}
-                                    onChange={(group) =>
-                                        onBlockChange(group, index)
-                                    }
-                                    disabled={props.disabled}
-                                    onDelete={
-                                        props.value.length > 1
-                                            ? () => onDelete(index)
-                                            : undefined
-                                    }
-                                />
-                            </div>
-                        </>
-                    )}
-                </Index>
+        <div className={clsx(styles.ruleBuilder, props.className)}>
+            {props.value.length > 0 ? (
+                <>
+                    {props.value.map((_item2, index) => {
+                        const group = () => _item2
+                        return (
+                            <Fragment key={index}>
+                                {
+                                    <>
+                                        {index > 0 ? (
+                                            <>
+                                                <div
+                                                    className={styles.and}
+                                                >{t`AND`}</div>
+                                            </>
+                                        ) : null}
+                                        <div className={styles.block}>
+                                            <RuleBlockContent
+                                                value={group()}
+                                                onChange={(group) =>
+                                                    onBlockChange(group, index)
+                                                }
+                                                disabled={props.disabled}
+                                                onDelete={
+                                                    props.value.length > 1
+                                                        ? () => onDelete(index)
+                                                        : undefined
+                                                }
+                                            />
+                                        </div>
+                                    </>
+                                }
+                            </Fragment>
+                        )
+                    })}
 
-                <Show when={!props.disabled}>
-                    <Button
-                        class={styles.addAnd}
-                        kind="outline"
-                        onClick={onAdd}
-                    >
-                        {t`Add AND rule`}
-                    </Button>
-                </Show>
-            </Show>
+                    {!props.disabled ? (
+                        <>
+                            <Button
+                                className={styles.addAnd}
+                                kind="outline"
+                                onClick={onAdd}
+                            >
+                                {t`Add AND rule`}
+                            </Button>
+                        </>
+                    ) : null}
+                </>
+            ) : (
+                <div className={styles.block}>
+                    <EmptyRow
+                        onChange={(rule) => props.onChange([[rule]])}
+                        disabled={props.disabled}
+                    />
+                </div>
+            )}
         </div>
     )
 }
-
 export default RuleEditor
-
 const rules: SimpleRule[] = [
     {
         type: RuleType.BirthDistance,
@@ -1012,7 +1111,6 @@ const rules: SimpleRule[] = [
         },
     },
 ]
-
 const veins: VeinType[] = [
     VeinType.Iron,
     VeinType.Copper,
@@ -1029,7 +1127,6 @@ const veins: VeinType[] = [
     VeinType.Bamboo,
     VeinType.Mag,
 ]
-
 const spectrs: SpectrType[] = [
     SpectrType.O,
     SpectrType.B,
@@ -1040,9 +1137,7 @@ const spectrs: SpectrType[] = [
     SpectrType.M,
     SpectrType.X,
 ]
-
 const oceans: OceanType[] = [OceanType.Water, OceanType.Sulfur]
-
 const starTypes: StarType[] = [
     StarType.MainSeqStar,
     StarType.GiantStar,
@@ -1050,7 +1145,6 @@ const starTypes: StarType[] = [
     StarType.BlackHole,
     StarType.NeutronStar,
 ]
-
 const gasTypes: GasType[] = [
     GasType.Hydrogen,
     GasType.Deuterium,

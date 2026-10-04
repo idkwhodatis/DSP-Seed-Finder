@@ -22,3 +22,11 @@
     justify-content: flex-end;
     gap: 8px;
 }
+
+.top,
+.warnButtons {
+    flex-wrap: wrap;
+}
+.warnText {
+    max-width: 540px;
+}

@@ -1,44 +1,26 @@
-import { ParentComponent, createEffect, createSignal } from "solid-js"
-import clsx from "clsx"
-import styles from "~styles"
-import { computePosition, flip, shift } from "@floating-ui/dom"
-
-const Tooltip: ParentComponent<{ text: string; class?: string }> = (props) => {
-    let root: HTMLDivElement
-    let popup: HTMLDivElement
-
-    const [focus, setFocus] = createSignal(false)
-
-    createEffect(() => {
-        if (focus()) {
-            popup!.style.display = ""
-            computePosition(root!, popup!, {
-                strategy: "fixed",
-                placement: "top",
-                middleware: [flip({ fallbackPlacements: ["bottom"] }), shift()],
-                // eslint-disable-next-line solid/reactivity
-            }).then(({ x, y }) => {
-                popup!.style.left = x + "px"
-                popup!.style.top = y + "px"
-            })
-        } else {
-            popup!.style.display = "none"
-        }
-    })
-
+import type { PropsWithChildren } from "react"
+import { Tooltip as Primitive } from "radix-ui"
+export default function Tooltip(
+    props: PropsWithChildren<{ text: string; className?: string }>,
+) {
     return (
-        <span
-            ref={root!}
-            class={clsx(styles.tooltip, props.class)}
-            onMouseEnter={() => setFocus(true)}
-            onMouseLeave={() => setFocus(false)}
-        >
-            {props.children}
-            <div ref={popup!} class={styles.popup}>
-                {props.text}
-            </div>
-        </span>
+        <Primitive.Provider delayDuration={250}>
+            <Primitive.Root>
+                <Primitive.Trigger asChild>
+                    <span tabIndex={0} className={props.className}>
+                        {props.children}
+                    </span>
+                </Primitive.Trigger>
+                <Primitive.Portal>
+                    <Primitive.Content
+                        sideOffset={5}
+                        className="z-50 max-w-80 rounded-md border border-border bg-popover px-3 py-2 text-sm text-popover-foreground shadow-lg"
+                    >
+                        {props.text}
+                        <Primitive.Arrow className="fill-popover" />
+                    </Primitive.Content>
+                </Primitive.Portal>
+            </Primitive.Root>
+        </Primitive.Provider>
     )
 }
-
-export default Tooltip

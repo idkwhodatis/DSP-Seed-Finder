@@ -61,13 +61,11 @@ export function constructRule(rules: SimpleRule[][]): Rule {
 
 export function constructMultiRule(multiRules: MultiRule[][]): CompositeRule {
     const raw: CompositeRule[] = multiRules.map((rs): CompositeRule => {
-        const x = rs.map(
-            ({ condition, rules }): Rule.Composite => ({
-                type: CompositeRuleType.Composite,
-                condition,
-                rule: constructRule(rules),
-            }),
-        )
+        const x = rs.map(({ condition, rules }): Rule.Composite => ({
+            type: CompositeRuleType.Composite,
+            condition,
+            rule: constructRule(rules),
+        }))
         return x.length === 1
             ? x[0]!
             : { type: CompositeRuleType.CompositeOr, rules: x }

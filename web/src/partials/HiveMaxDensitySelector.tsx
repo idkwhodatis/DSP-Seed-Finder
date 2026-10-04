@@ -1,16 +1,16 @@
-import { Component } from "solid-js"
+import type { FC as Component } from "react"
 import Select from "../components/Select"
 import { hiveMaxDensityValues } from "../util"
-
 const HiveMaxDensitySelector: Component<{
-    class?: string
+    className?: string
     value: float
     onChange: (value: float) => void
     disabled?: boolean
 }> = (props) => {
     return (
         <Select
-            class={props.class}
+            aria-label="Dark Fog max density"
+            className={props.className}
             value={props.value}
             onChange={(v) => props.onChange(v)}
             options={hiveMaxDensityValues}
@@ -19,5 +19,4 @@ const HiveMaxDensitySelector: Component<{
         />
     )
 }
-
 export default HiveMaxDensitySelector

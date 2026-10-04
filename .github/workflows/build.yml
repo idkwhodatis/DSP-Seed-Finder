@@ -3,7 +3,9 @@ name: Build
 on:
   push:
     branches:
-      - main
+      - master
+
+  pull_request:
 
 jobs:
   build:
@@ -18,15 +20,22 @@ jobs:
         with:
           node-version: 24
 
-      - uses: jetli/wasm-pack-action@v0.4.0
-        with:
-          version: v0.14.0
+      - name: Install official wasm-pack 0.14.0
+        shell: pwsh
+        run: |
+          $archive = Join-Path $env:RUNNER_TEMP "wasm-pack.tar.gz"
+          Invoke-WebRequest "https://github.com/wasm-bindgen/wasm-pack/releases/download/v0.14.0/wasm-pack-v0.14.0-x86_64-pc-windows-msvc.tar.gz" -OutFile $archive
+          tar -xzf $archive -C $env:RUNNER_TEMP
+          Join-Path $env:RUNNER_TEMP "wasm-pack-v0.14.0-x86_64-pc-windows-msvc" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Install and Build
         shell: sh
         run: |
-          npm install --omit=dev
+          npm ci
+          cargo test --release
           npm run build
+          npm run test:engine
+          npm run check
           cp dist/index.html dist/404.html
 
       - name: Upload artifact
@@ -37,6 +46,7 @@ jobs:
           path: dist/
 
   deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     needs: build
     runs-on: ubuntu-latest
 

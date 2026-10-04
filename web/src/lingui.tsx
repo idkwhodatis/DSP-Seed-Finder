@@ -1,72 +1,44 @@
+import { useEffect, useState, type PropsWithChildren } from "react"
 import { i18n } from "@lingui/core"
-import { Show, createContext, createResource, useContext } from "solid-js"
+import {
+    I18nProvider as Provider,
+    Trans as RuntimeTrans,
+    useLingui as useRuntimeLingui,
+} from "@lingui/react"
 import { useStore } from "./store"
-import type { msg, plural, select, selectOrdinal } from "@lingui/core/macro"
-import type { JSX, ParentComponent } from "solid-js"
-import { loadLanguage, TFunc } from "./linguiCore"
-
-interface I18nContext {
-    i18n: typeof i18n
-    t: TFunc
-    plural: typeof plural
-    select: typeof select
-    selectOrdinal: typeof selectOrdinal
-    msg: typeof msg
-}
-
-const Context = createContext<TFunc>(undefined as unknown as TFunc)
-
-export const I18nProvider: ParentComponent = (props) => {
+export const Trans =
+    RuntimeTrans as unknown as typeof import("@lingui/react/macro").Trans
+export const useLingui = useRuntimeLingui as unknown as () => ReturnType<
+    typeof import("@lingui/react/macro").useLingui
+>
+export function I18nProvider({ children }: PropsWithChildren) {
     const [store] = useStore()
-    const [_t] = createResource(
-        () => store.settings.language,
-        async (lang) => {
-            await loadLanguage(lang)
-            document.documentElement.lang = lang
-            return i18n._.bind(i18n) as any
-        },
+    const lang = store.settings.language
+    const [ready, setReady] = useState(false)
+    const [error, setError] = useState(false)
+    useEffect(() => {
+        let active = true
+        setError(false)
+        import(`../i18n/${lang}.po`)
+            .then(({ messages }) => {
+                if (!active) return
+                i18n.load(lang, messages)
+                i18n.activate(lang)
+                document.documentElement.lang = lang
+                setReady(true)
+            })
+            .catch(() => {
+                if (active) setError(true)
+            })
+        return () => {
+            active = false
+        }
+    }, [lang])
+    if (error)
+        return <p role="alert">Unable to load language. Please reload.</p>
+    return ready ? (
+        <Provider i18n={i18n}>{children}</Provider>
+    ) : (
+        <p role="status">Loading…</p>
     )
-
-    return (
-        <Show when={_t()}>
-            <Context.Provider value={(...args) => _t()(...args)}>
-                {props.children}
-            </Context.Provider>
-        </Show>
-    )
-}
-
-export function useLingui() {
-    const t = useContext(Context)
-    return {
-        i18n,
-        _: t || (i18n._.bind(i18n) as any),
-    } as unknown as I18nContext
-}
-
-export const Trans: ParentComponent = (props) => {
-    const { _ } = useLingui() as any
-    const translation = () => {
-        const { id, values, components } = props as any
-        return formatElements(_(id, values!), components)
-    }
-
-    return <>{translation()}</>
-}
-
-export type TransProps = {
-    id: string
-    values?: Record<string, any>
-    components?: { [key: string]: JSX.Element }
-}
-
-const tagRe = /<([a-zA-Z0-9]+)\/>/
-
-function formatElements(
-    value: string,
-    elements: { [key: string]: JSX.Element } = {},
-): string | JSX.ArrayElement {
-    const parts = value.split(tagRe)
-    if (parts.length === 1) return value
-    return parts.map((part, i) => (i % 2 === 1 ? elements[parts[i]!]! : part))
 }

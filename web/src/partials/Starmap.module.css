@@ -17,3 +17,9 @@
     font-size: 20px;
     border-radius: 4px;
 }
+
+.starmap {
+    width: 100%;
+    min-height: 320px;
+    max-height: calc(100dvh - 130px);
+}

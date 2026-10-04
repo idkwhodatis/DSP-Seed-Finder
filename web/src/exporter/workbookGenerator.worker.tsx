@@ -141,23 +141,31 @@ function createWorkbook(useActualVeins: boolean) {
     }
 }
 
-let loadPromise: Promise<ReturnType<typeof createWorkbook>> | undefined
-
-self.onmessage = (ev) => {
-    if (loadPromise) {
-        loadPromise.then((workbook) => {
-            if (typeof ev.data === "string") {
-                const format = ev.data as any
-                workbook.buffer(format).then((result) => {
-                    self.postMessage(result, [result.buffer])
-                })
-            } else {
-                workbook.add(ev.data)
-            }
+let workbook: ReturnType<typeof createWorkbook> | undefined
+let queue = Promise.resolve()
+let failed = false
+function reportError(error: unknown) {
+    if (failed) return
+    failed = true
+    self.postMessage({ type: "error", error: String(error) })
+}
+self.addEventListener("unhandledrejection", (event) => {
+    event.preventDefault()
+    reportError(event.reason)
+})
+self.onmessage = (event) => {
+    queue = queue
+        .then(async () => {
+            if (failed) return
+            if (!workbook) {
+                await loadLanguage(event.data.language)
+                workbook = createWorkbook(event.data.useActualVeins)
+            } else if (typeof event.data === "string") {
+                const result = await workbook.buffer(
+                    event.data as ExportOptions["format"],
+                )
+                self.postMessage(result, [result.buffer])
+            } else workbook.add(event.data)
         })
-    } else {
-        loadPromise = loadLanguage(ev.data.language).then(() =>
-            createWorkbook(ev.data.useActualVeins),
-        )
-    }
+        .catch(reportError)
 }
