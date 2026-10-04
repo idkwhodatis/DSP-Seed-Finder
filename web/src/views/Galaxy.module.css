@@ -199,3 +199,16 @@
         width: 160px;
     }
 }
+
+/* A bounded, scrollable star list must not shrink to its padding on phones. */
+@media (max-width: 760px) {
+    .starList {
+        flex: none;
+        height: 128px;
+        padding-bottom: 8px;
+        align-content: flex-start;
+    }
+    .right {
+        min-height: 0;
+    }
+}
