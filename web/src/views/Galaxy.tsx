@@ -398,7 +398,10 @@ const View: FC<{ seed: number; index?: number; isSearch: boolean }> = (
                         ))}
                     </div>
                 </div>
-                <div className={styles.right}>
+                <div
+                    key={`${key}:${props.isSearch ? "search" : (props.index ?? "map")}`}
+                    className={styles.right}
+                >
                     {props.isSearch ? (
                         <StarSearch
                             seed={props.seed}

@@ -315,3 +315,22 @@ describe("star search lifecycle", () => {
         ).toBeTruthy()
     })
 })
+
+describe("viewer scroll ownership", () => {
+    it("starts each selected star at the top without regenerating unchanged galaxy data", async () => {
+        vi.mocked(generateGalaxy).mockResolvedValue(galaxy(0))
+        const view = route("/galaxy/0/0?count=32")
+        const oldPane = (await screen.findByTestId("star-view")).parentElement!
+        oldPane.scrollTop = 500
+        await act(async () => view.router.navigate("/galaxy/0/1?count=32"))
+        const newPane = screen.getByTestId("star-view").parentElement!
+        expect(newPane).not.toBe(oldPane)
+        expect(newPane.scrollTop).toBe(0)
+        expect(screen.getByTestId("star-view")).toHaveTextContent("Beta")
+        expect(generateGalaxy).toHaveBeenCalledTimes(1)
+        await act(async () =>
+            view.router.navigate("/galaxy/0/1?count=32#star-1-planet-3"),
+        )
+        expect(screen.getByTestId("star-view").parentElement).toBe(newPane)
+    })
+})
