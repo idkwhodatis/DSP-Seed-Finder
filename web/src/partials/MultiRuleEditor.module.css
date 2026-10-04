@@ -111,3 +111,15 @@
         padding: 8px;
     }
 }
+
+/* Let long rule sentences wrap within the card rather than widening the page. */
+.editRow {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+}
+@media (max-width: 600px) {
+    .editRow {
+        flex-basis: 100%;
+    }
+}
