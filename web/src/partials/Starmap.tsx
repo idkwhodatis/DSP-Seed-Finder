@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { computePosition, flip } from "@floating-ui/dom"
 import { useLiveState } from "../hooks/useLiveState"
 import { StarType } from "../enums"
+import { useLingui } from "#lingui"
 import styles from "~styles"
 
 type Color = [number, number, number]
@@ -46,7 +47,7 @@ function getStarColor(color: float) {
     const color1 = colors[index]!
     if (color1[0] === color) return color1[1]
     const color2 = colors[index + 1]!
-    const t = (color - color1[0]) / color2[0] - color1[0]
+    const t = (color - color1[0]) / (color2[0] - color1[0])
     return color1[1].map((c, i) => c + t * (color2[1][i]! - c)) as Color
 }
 
@@ -147,7 +148,12 @@ function getConnectors(stars: Star[]) {
     return output
 }
 
-const StarNode: FC<{ star: Star; seed: number; search: string }> = (props) => {
+const StarNode: FC<{
+    star: Star
+    seed: number
+    search: string
+    displayName?: string
+}> = (props) => {
     const navigate = useNavigate()
     const [hover, setHover] = useLiveState(false)
     const [focused, setFocused] = useLiveState(false)
@@ -221,7 +227,7 @@ const StarNode: FC<{ star: Star; seed: number; search: string }> = (props) => {
         stroke: focused() ? "#ffffff" : "transparent",
         role: "link",
         tabIndex: 0,
-        "aria-label": `${props.star.name}, #${props.star.index + 1}`,
+        "aria-label": `${props.displayName ?? props.star.name}, #${props.star.index + 1}`,
         "aria-describedby": visible ? popupId : undefined,
         onClick: () => navigate(url),
         onMouseEnter: () => setHover(true),
@@ -247,7 +253,9 @@ const StarNode: FC<{ star: Star; seed: number; search: string }> = (props) => {
                     r={0.7}
                     cx={props.star.position[0]}
                     cy={-props.star.position[2]}
-                    fill="#00881d"
+                    fill="none"
+                    stroke="#56d697"
+                    strokeWidth={0.14}
                     aria-hidden="true"
                 />
             )}
@@ -261,7 +269,7 @@ const StarNode: FC<{ star: Star; seed: number; search: string }> = (props) => {
                     style={{ color, display: visible ? "block" : "none" }}
                     className={styles.popup}
                 >
-                    {props.star.name}
+                    {props.displayName ?? props.star.name}
                 </Link>,
                 document.getElementById("portal") ?? document.body,
             )}
@@ -269,7 +277,12 @@ const StarNode: FC<{ star: Star; seed: number; search: string }> = (props) => {
     )
 }
 
-const Starmap: FC<{ galaxy: Galaxy; search: string }> = (props) => {
+const Starmap: FC<{
+    galaxy: Galaxy
+    search: string
+    displayNames?: ReadonlyMap<number, string>
+}> = (props) => {
+    const { t } = useLingui()
     function getViewBox() {
         if (props.galaxy.stars.length === 0) return "-2 -2 4 4"
         let top = -Infinity,
@@ -292,7 +305,9 @@ const Starmap: FC<{ galaxy: Galaxy; search: string }> = (props) => {
     return (
         <svg
             viewBox={getViewBox()}
-            preserveAspectRatio="xMidYMid slice"
+            preserveAspectRatio="xMidYMid meet"
+            role="group"
+            aria-label={t`Starmap`}
             className={styles.starmap}
         >
             {getConnectors(props.galaxy.stars).map(
@@ -304,7 +319,8 @@ const Starmap: FC<{ galaxy: Galaxy; search: string }> = (props) => {
                         x2={x2}
                         y2={-y2}
                         strokeWidth={0.07}
-                        stroke="#666"
+                        stroke="currentColor"
+                        className={styles.connector}
                     />
                 ),
             )}
@@ -316,6 +332,7 @@ const Starmap: FC<{ galaxy: Galaxy; search: string }> = (props) => {
                         star={star}
                         seed={props.galaxy.seed}
                         search={props.search}
+                        displayName={props.displayNames?.get(star.index)}
                     />
                 ))}
         </svg>

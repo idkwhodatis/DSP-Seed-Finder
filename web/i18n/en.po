@@ -47,6 +47,10 @@ msgstr ""
 msgid "<0/> to <1/>"
 msgstr ""
 
+#: web/src/partials/GalaxyOverview.tsx:203
+msgid "2D projection · All stars shown"
+msgstr ""
+
 #: web/src/partials/RuleEditor.tsx:196
 msgid "actual"
 msgstr ""
@@ -62,7 +66,7 @@ msgid "Add OR rule"
 msgstr ""
 
 #: web/src/exporter/workbookGenerator.worker.tsx:62
-#: web/src/partials/StarView.tsx:276
+#: web/src/partials/StarView.tsx:280
 msgid "Age"
 msgstr ""
 
@@ -107,7 +111,7 @@ msgstr ""
 msgid "Black Hole"
 msgstr ""
 
-#: web/src/partials/StarView.tsx:166
+#: web/src/partials/StarView.tsx:167
 msgid "Black Hole / Neutron Star"
 msgstr ""
 
@@ -144,7 +148,7 @@ msgstr ""
 msgid "Coal"
 msgstr ""
 
-#: web/src/partials/StarView.tsx:154
+#: web/src/partials/StarView.tsx:155
 msgid "Collapse star details"
 msgstr ""
 
@@ -181,13 +185,13 @@ msgstr ""
 
 #: web/src/partials/ExportModal.tsx:321
 #: web/src/partials/ProgressEditor.tsx:231
-#: web/src/views/Galaxy.tsx:100
+#: web/src/views/Galaxy.tsx:102
 msgid "Dark Fog initial occupation"
 msgstr ""
 
 #: web/src/partials/ExportModal.tsx:337
 #: web/src/partials/ProgressEditor.tsx:274
-#: web/src/views/Galaxy.tsx:109
+#: web/src/views/Galaxy.tsx:111
 msgid "Dark Fog max density"
 msgstr ""
 
@@ -209,7 +213,7 @@ msgstr ""
 msgid "Deuterium"
 msgstr ""
 
-#: web/src/partials/StarView.tsx:222
+#: web/src/partials/StarView.tsx:226
 msgid "Distance from furthest <0/>"
 msgstr ""
 
@@ -217,7 +221,7 @@ msgstr ""
 msgid "Distance from furthest X star"
 msgstr ""
 
-#: web/src/partials/StarView.tsx:201
+#: web/src/partials/StarView.tsx:205
 msgid "Distance from nearest <0/>"
 msgstr ""
 
@@ -231,7 +235,7 @@ msgstr ""
 
 #: web/src/exporter/workbookGenerator.worker.tsx:69
 #: web/src/names.tsx:40
-#: web/src/partials/StarView.tsx:192
+#: web/src/partials/StarView.tsx:196
 msgid "Distance from start"
 msgstr ""
 
@@ -274,8 +278,8 @@ msgstr ""
 
 #. placeholder {0}: min()
 #. placeholder {1}: max()
-#: web/src/partials/GalaxyOverview.tsx:87
-#: web/src/partials/StarView.tsx:304
+#: web/src/partials/GalaxyOverview.tsx:90
+#: web/src/partials/StarView.tsx:308
 msgid ""
 "Estimated:\n"
 "{0} - {1}"
@@ -294,7 +298,7 @@ msgstr ""
 msgid "excluding"
 msgstr ""
 
-#: web/src/partials/StarView.tsx:154
+#: web/src/partials/StarView.tsx:155
 msgid "Expand star details"
 msgstr ""
 
@@ -302,7 +306,7 @@ msgstr ""
 #: web/src/partials/ExportModal.tsx:429
 #: web/src/views/FindGalaxy.tsx:528
 #: web/src/views/FindStar.tsx:317
-#: web/src/views/Galaxy.tsx:349
+#: web/src/views/Galaxy.tsx:365
 msgid "Export"
 msgstr ""
 
@@ -317,7 +321,7 @@ msgid "Exporting {0} / {1}"
 msgstr ""
 
 #. placeholder {0}: props.seed
-#: web/src/views/Galaxy.tsx:192
+#: web/src/views/Galaxy.tsx:195
 msgid "Find stars matching the following criteria in seed {0}."
 msgstr ""
 
@@ -352,12 +356,12 @@ msgstr ""
 #: web/src/names.tsx:84
 #: web/src/names.tsx:85
 #: web/src/names.tsx:103
-#: web/src/partials/StarView.tsx:428
+#: web/src/partials/StarView.tsx:449
 msgid "Gas Giant"
 msgstr ""
 
 #: web/src/names.tsx:52
-#: web/src/partials/GalaxyOverview.tsx:239
+#: web/src/partials/GalaxyOverview.tsx:277
 msgid "Gas rate"
 msgstr ""
 
@@ -450,7 +454,7 @@ msgstr ""
 msgid "Hive count"
 msgstr ""
 
-#: web/src/partials/StarView.tsx:479
+#: web/src/partials/StarView.tsx:500
 msgid "Horizontal rotation"
 msgstr ""
 
@@ -465,12 +469,16 @@ msgstr ""
 
 #: web/src/names.tsx:86
 #: web/src/names.tsx:87
-#: web/src/partials/StarView.tsx:429
+#: web/src/partials/StarView.tsx:450
 msgid "Ice Giant"
 msgstr ""
 
 #: web/src/names.tsx:106
 msgid "Icefrostia"
+msgstr ""
+
+#: web/src/partials/GalaxyOverview.tsx:209
+msgid "Icon credits"
 msgstr ""
 
 #: web/src/partials/ProgressEditor.tsx:176
@@ -497,16 +505,16 @@ msgid "Initial"
 msgstr ""
 
 #: web/src/exporter/workbookGenerator.worker.tsx:72
-#: web/src/partials/StarView.tsx:246
+#: web/src/partials/StarView.tsx:250
 msgid "Initial number of hives"
 msgstr ""
 
-#: web/src/views/Galaxy.tsx:428
+#: web/src/views/Galaxy.tsx:461
 msgid "Invalid seed."
 msgstr ""
 
-#: web/src/views/Galaxy.tsx:397
-#: web/src/views/Galaxy.tsx:440
+#: web/src/views/Galaxy.tsx:426
+#: web/src/views/Galaxy.tsx:473
 msgid "Invalid star index."
 msgstr ""
 
@@ -544,8 +552,12 @@ msgid "Is the Starting system"
 msgstr ""
 
 #: web/src/partials/ExportModal.tsx:353
-#: web/src/views/Galaxy.tsx:119
+#: web/src/views/Galaxy.tsx:121
 msgid "It is much faster to estimate the amount of veins over generating the excat numbers."
+msgstr ""
+
+#: web/src/partials/StarView.tsx:633
+msgid "Jump to planet"
 msgstr ""
 
 #: web/src/exporter/workbookGenerator.worker.tsx:24
@@ -569,13 +581,13 @@ msgstr ""
 msgid "Loading profiles…"
 msgstr ""
 
-#: web/src/views/Galaxy.tsx:328
+#: web/src/views/Galaxy.tsx:344
 msgid "Loading..."
 msgstr ""
 
 #: web/src/exporter/workbookGenerator.worker.tsx:66
 #: web/src/names.tsx:43
-#: web/src/partials/StarView.tsx:186
+#: web/src/partials/StarView.tsx:190
 msgid "Luminosity"
 msgstr ""
 
@@ -588,7 +600,7 @@ msgid "Maroonfrost"
 msgstr ""
 
 #: web/src/exporter/workbookGenerator.worker.tsx:61
-#: web/src/partials/StarView.tsx:264
+#: web/src/partials/StarView.tsx:268
 msgid "Mass"
 msgstr ""
 
@@ -598,12 +610,12 @@ msgstr ""
 
 #: web/src/exporter/workbookGenerator.worker.tsx:68
 #: web/src/names.tsx:45
-#: web/src/partials/StarView.tsx:240
+#: web/src/partials/StarView.tsx:244
 msgid "Max dyson sphere radius"
 msgstr ""
 
 #: web/src/exporter/workbookGenerator.worker.tsx:73
-#: web/src/partials/StarView.tsx:252
+#: web/src/partials/StarView.tsx:256
 msgid "Maximum number of hives"
 msgstr ""
 
@@ -616,7 +628,7 @@ msgstr ""
 msgid "Native Mode"
 msgstr ""
 
-#: web/src/partials/StarView.tsx:624
+#: web/src/partials/StarView.tsx:681
 msgid "Nearby Stars"
 msgstr ""
 
@@ -648,7 +660,7 @@ msgstr ""
 
 #: web/src/partials/ExportModal.tsx:293
 #: web/src/partials/ProgressEditor.tsx:159
-#: web/src/views/Galaxy.tsx:85
+#: web/src/views/Galaxy.tsx:87
 msgid "Number of stars"
 msgstr ""
 
@@ -657,10 +669,10 @@ msgid "Obliquity"
 msgstr ""
 
 #: web/src/names.tsx:51
-#: web/src/partials/StarView.tsx:342
-#: web/src/partials/StarView.tsx:353
-#: web/src/partials/StarView.tsx:539
-#: web/src/partials/StarView.tsx:550
+#: web/src/partials/StarView.tsx:346
+#: web/src/partials/StarView.tsx:357
+#: web/src/partials/StarView.tsx:560
+#: web/src/partials/StarView.tsx:571
 msgid "Ocean"
 msgstr ""
 
@@ -682,8 +694,8 @@ msgid "Orbit longitude"
 msgstr ""
 
 #: web/src/exporter/workbookGenerator.worker.tsx:85
-#: web/src/partials/StarView.tsx:433
-#: web/src/partials/StarView.tsx:487
+#: web/src/partials/StarView.tsx:454
+#: web/src/partials/StarView.tsx:508
 msgid "Orbit radius"
 msgstr ""
 
@@ -691,11 +703,11 @@ msgstr ""
 msgid "Orbital period"
 msgstr ""
 
-#: web/src/partials/StarView.tsx:464
+#: web/src/partials/StarView.tsx:485
 msgid "Orbital resonance 1 : 2"
 msgstr ""
 
-#: web/src/partials/StarView.tsx:472
+#: web/src/partials/StarView.tsx:493
 msgid "Orbital resonance 1 : 4"
 msgstr ""
 
@@ -724,7 +736,9 @@ msgstr ""
 msgid "Planet themes"
 msgstr ""
 
-#: web/src/partials/StarView.tsx:650
+#: web/src/partials/StarView.tsx:636
+#: web/src/partials/StarView.tsx:659
+#: web/src/partials/StarView.tsx:661
 msgid "Planets"
 msgstr ""
 
@@ -758,11 +772,11 @@ msgid "Provide a seed list to limit the search to these seeds only. Must be .txt
 msgstr ""
 
 #: web/src/exporter/workbookGenerator.worker.tsx:67
-#: web/src/partials/StarView.tsx:258
+#: web/src/partials/StarView.tsx:262
 msgid "Radius"
 msgstr ""
 
-#: web/src/views/Galaxy.tsx:75
+#: web/src/views/Galaxy.tsx:77
 msgid "Random"
 msgstr ""
 
@@ -773,12 +787,12 @@ msgstr ""
 
 #: web/src/partials/ExportModal.tsx:305
 #: web/src/partials/ProgressEditor.tsx:190
-#: web/src/views/Galaxy.tsx:91
+#: web/src/views/Galaxy.tsx:93
 msgid "Resource multiplier"
 msgstr ""
 
-#: web/src/partials/GalaxyOverview.tsx:212
-#: web/src/partials/StarView.tsx:614
+#: web/src/partials/GalaxyOverview.tsx:250
+#: web/src/partials/StarView.tsx:655
 msgid "Resources"
 msgstr ""
 
@@ -790,7 +804,7 @@ msgstr ""
 msgid "Retriving data"
 msgstr ""
 
-#: web/src/views/Galaxy.tsx:323
+#: web/src/views/Galaxy.tsx:339
 msgid "Retry"
 msgstr ""
 
@@ -816,7 +830,7 @@ msgstr ""
 msgid "Sakura Ocean"
 msgstr ""
 
-#: web/src/partials/StarView.tsx:448
+#: web/src/partials/StarView.tsx:469
 msgid "Satellite"
 msgstr ""
 
@@ -836,19 +850,19 @@ msgstr ""
 msgid "Scorchedia"
 msgstr ""
 
-#: web/src/views/Galaxy.tsx:199
-#: web/src/views/Galaxy.tsx:353
+#: web/src/views/Galaxy.tsx:202
+#: web/src/views/Galaxy.tsx:369
 msgid "Search"
 msgstr ""
 
-#: web/src/views/Galaxy.tsx:199
+#: web/src/views/Galaxy.tsx:202
 msgid "Searching..."
 msgstr ""
 
 #: web/src/exporter/workbookGenerator.worker.tsx:55
 #: web/src/exporter/workbookGenerator.worker.tsx:79
-#: web/src/partials/GalaxyOverview.tsx:181
-#: web/src/views/Galaxy.tsx:62
+#: web/src/partials/GalaxyOverview.tsx:216
+#: web/src/views/Galaxy.tsx:64
 msgid "Seed"
 msgstr ""
 
@@ -865,6 +879,10 @@ msgstr ""
 msgid "Seed: "
 msgstr ""
 
+#: web/src/partials/GalaxyOverview.tsx:191
+msgid "Select a star to view its planets"
+msgstr ""
+
 #: web/src/names.tsx:35
 #: web/src/partials/RuleEditor.tsx:43
 msgid "Select..."
@@ -876,13 +894,13 @@ msgid "Silicon Ore"
 msgstr ""
 
 #: web/src/exporter/workbookGenerator.worker.tsx:92
-#: web/src/partials/StarView.tsx:505
+#: web/src/partials/StarView.tsx:526
 msgid "Solar power"
 msgstr ""
 
 #: web/src/exporter/workbookGenerator.worker.tsx:65
 #: web/src/names.tsx:44
-#: web/src/partials/StarView.tsx:182
+#: web/src/partials/StarView.tsx:186
 msgid "Spectral class"
 msgstr ""
 
@@ -899,11 +917,13 @@ msgstr ""
 msgid "Star Finder is no longer supported. Please use Galaxy Finder instead."
 msgstr ""
 
-#: web/src/partials/GalaxyOverview.tsx:189
+#: web/src/partials/GalaxyOverview.tsx:224
 msgid "Star types"
 msgstr ""
 
-#: web/src/views/Galaxy.tsx:344
+#: web/src/partials/GalaxyOverview.tsx:188
+#: web/src/partials/Starmap.tsx:310
+#: web/src/views/Galaxy.tsx:360
 msgid "Starmap"
 msgstr ""
 
@@ -912,6 +932,7 @@ msgid "Start"
 msgstr ""
 
 #: web/src/names.tsx:38
+#: web/src/partials/GalaxyOverview.tsx:200
 msgid "Starting system"
 msgstr ""
 
@@ -930,13 +951,13 @@ msgstr ""
 
 #: web/src/exporter/workbookGenerator.worker.tsx:47
 #: web/src/partials/RuleEditor.tsx:298
-#: web/src/partials/StarView.tsx:351
-#: web/src/partials/StarView.tsx:548
+#: web/src/partials/StarView.tsx:355
+#: web/src/partials/StarView.tsx:569
 msgid "Sulfuric Acid"
 msgstr ""
 
 #: web/src/exporter/workbookGenerator.worker.tsx:63
-#: web/src/partials/StarView.tsx:270
+#: web/src/partials/StarView.tsx:274
 msgid "Temperature"
 msgstr ""
 
@@ -953,7 +974,7 @@ msgid "this ruleset"
 msgstr ""
 
 #: web/src/exporter/workbookGenerator.worker.tsx:84
-#: web/src/partials/StarView.tsx:456
+#: web/src/partials/StarView.tsx:477
 msgid "Tidally locked"
 msgstr ""
 
@@ -975,9 +996,9 @@ msgid "Tropicana"
 msgstr ""
 
 #: web/src/exporter/workbookGenerator.worker.tsx:64
-#: web/src/partials/StarView.tsx:178
-#: web/src/partials/StarView.tsx:423
-#: web/src/partials/StarView.tsx:511
+#: web/src/partials/StarView.tsx:179
+#: web/src/partials/StarView.tsx:444
+#: web/src/partials/StarView.tsx:532
 msgid "Type"
 msgstr ""
 
@@ -989,7 +1010,7 @@ msgstr ""
 msgid "Unable to complete the operation. Please try again."
 msgstr ""
 
-#: web/src/views/Galaxy.tsx:320
+#: web/src/views/Galaxy.tsx:336
 msgid "Unable to generate this galaxy."
 msgstr ""
 
@@ -997,7 +1018,7 @@ msgstr ""
 msgid "Unable to load saved profiles. Please try again."
 msgstr ""
 
-#: web/src/views/Galaxy.tsx:202
+#: web/src/views/Galaxy.tsx:205
 msgid "Unable to search this galaxy. Please try again."
 msgstr ""
 
@@ -1013,7 +1034,7 @@ msgid "Untitled"
 msgstr ""
 
 #: web/src/partials/ExportModal.tsx:355
-#: web/src/views/Galaxy.tsx:121
+#: web/src/views/Galaxy.tsx:123
 msgid "Use estimated veins"
 msgstr ""
 
@@ -1021,7 +1042,7 @@ msgstr ""
 msgid "Vein amount"
 msgstr ""
 
-#: web/src/views/Galaxy.tsx:82
+#: web/src/views/Galaxy.tsx:84
 msgid "View"
 msgstr ""
 
@@ -1039,8 +1060,8 @@ msgstr ""
 
 #: web/src/exporter/workbookGenerator.worker.tsx:46
 #: web/src/partials/RuleEditor.tsx:297
-#: web/src/partials/StarView.tsx:340
-#: web/src/partials/StarView.tsx:537
+#: web/src/partials/StarView.tsx:344
+#: web/src/partials/StarView.tsx:558
 msgid "Water"
 msgstr ""
 
@@ -1056,7 +1077,7 @@ msgid "White Giant"
 msgstr ""
 
 #: web/src/exporter/workbookGenerator.worker.tsx:91
-#: web/src/partials/StarView.tsx:499
+#: web/src/partials/StarView.tsx:520
 msgid "Wind power"
 msgstr ""
 
@@ -1064,7 +1085,7 @@ msgstr ""
 msgid "X"
 msgstr ""
 
-#: web/src/partials/StarView.tsx:166
+#: web/src/partials/StarView.tsx:167
 msgid "X star"
 msgstr ""
 

@@ -1,168 +1,218 @@
+/* One scrolling parent owns the complete star view. No clipped, nested columns. */
 .view {
-    display: flex;
-    height: 100%;
+    min-width: 0;
+    padding: 12px;
+    display: grid;
+    grid-template-columns: minmax(280px, 0.9fr) minmax(320px, 1.1fr);
+    align-items: start;
+    gap: 12px;
 }
-
-.main {
-    overflow-y: scroll;
-}
-
-@media all and (min-width: 1440px) {
-    .main {
-        display: flex;
-    }
-}
-
-@media not all and (min-width: 1440px) {
-    .main .column:not(:first-child) {
-        margin-top: -12px;
-    }
-}
-
+.main,
 .column {
-    overflow-y: scroll;
+    min-width: 0;
 }
-
+.main {
+    display: grid;
+    gap: 12px;
+}
 .card {
     position: relative;
-    margin: 12px;
+    min-width: 0;
     padding: 12px;
+    border: 1px solid var(--border);
     border-radius: 8px;
-    background-color: rgba(160, 160, 160, 0.2);
+    background: var(--card);
 }
-
+.title {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0 0 12px;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 26px;
+}
+.starTitle {
+    padding-right: 24px;
+}
+.index,
+.count {
+    color: var(--muted-foreground);
+    font-size: 14px;
+    font-weight: 400;
+}
 .expand {
     position: absolute;
-    width: 40px;
-    height: 40px;
-    top: 0;
-    right: 0;
+    width: 32px;
+    height: 32px;
+    top: 8px;
+    right: 6px;
     display: grid;
     place-items: center;
     cursor: pointer;
     transform: rotate(-90deg);
-    transition: transform 0.3s;
+    transition: transform 0.2s;
 }
-
-.expand:hover {
-    color: var(--primary-light);
-}
-
 .expanded {
-    transform: rotate(0deg);
+    transform: rotate(0);
 }
-
-.title {
-    font-size: 22px;
-    margin-bottom: 16px;
-}
-
-.index {
-    margin-left: 12px;
-    color: #808080;
-}
-
 .row {
     display: flex;
+    align-items: baseline;
     justify-content: space-between;
-    font-size: 18px;
+    gap: 12px;
+    min-width: 0;
     padding: 4px 0;
+    font-size: 16px;
     line-height: 24px;
-    min-width: 300px;
-    gap: 16px;
 }
-
 .row + .row {
-    border-top: 1px dotted rgba(160, 160, 160, 0.5);
+    border-top: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
 }
-
+.field {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
 .value {
     text-align: right;
+    font-variant-numeric: tabular-nums;
 }
-
+.nearby {
+    grid-column: 1 / -1;
+}
+.nearby summary {
+    cursor: pointer;
+    margin: 0;
+}
+.nearby[open] summary {
+    margin-bottom: 8px;
+}
+.nearbyList {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+    gap: 0 20px;
+}
 .nearbyRow {
-    min-width: 280px;
+    align-items: center;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
 }
-
+.nearbyRow:hover {
+    background: var(--muted);
+}
+.nearbyName {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
 .nearbyType {
-    color: rgba(160, 160, 160, 0.8);
+    color: var(--muted-foreground);
+    font-size: 14px;
 }
-
 .nearbyDistance {
     display: inline-block;
     text-align: right;
     width: 60px;
+    font-variant-numeric: tabular-nums;
 }
-
 .planets {
-    padding: 12px 0;
-}
-
-.planets .title {
-    padding: 0 12px;
-}
-
-.planet {
-    font-size: 18px;
-    padding: 8px 12px;
-    line-height: 24px;
-    min-width: 240px;
-}
-
-.planet + .planet {
-    border-top: 2px solid rgba(160, 160, 160, 0.5);
-}
-
-.planetName {
-    font-size: 20px;
-    margin-bottom: 8px;
-}
-
-@media (max-width: 760px) {
-    .planets {
-        flex-wrap: wrap;
-    }
-    .planet {
-        max-width: 100%;
-    }
-    .row {
-        flex-wrap: wrap;
-    }
-}
-
-.main {
-    min-width: 0;
-    flex: 1;
-}
-.column {
     min-width: 0;
 }
-.row {
-    font-size: 16px;
-    min-width: 0;
+.planetNav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
 }
-.planet {
-    font-size: 16px;
-}
-.title {
-    font-size: 20px;
-}
-.card {
+.planetLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 32px;
+    padding: 3px 9px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 14px;
     background: var(--muted);
 }
-@media (max-width: 900px) {
+.planetLink:hover {
+    border-color: var(--ring);
+}
+.planetGrid {
+    display: grid;
+    gap: 12px;
+}
+.planet {
+    min-width: 0;
+    scroll-margin-top: 12px;
+}
+.planet:target {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+}
+.planetName {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 8px;
+}
+.planetNumber {
+    display: inline-grid;
+    place-items: center;
+    min-width: 26px;
+    height: 26px;
+    border-radius: 5px;
+    background: var(--muted);
+    color: var(--muted-foreground);
+    font-size: 13px;
+}
+@media (min-width: 1600px) {
     .view {
-        flex-direction: column;
-        height: auto;
+        grid-template-columns: minmax(300px, 0.75fr) minmax(580px, 1.65fr);
+    }
+    .planetGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+    }
+}
+@media (max-width: 1080px) {
+    .view {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .main {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+    }
+    .planetGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+    }
+}
+@media (max-width: 760px) {
+    .main,
+    .planetGrid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .view {
+        padding: 8px;
+        gap: 8px;
     }
     .main,
-    .column {
-        overflow: visible;
+    .planetGrid {
+        gap: 8px;
     }
-    .planets {
-        padding: 12px;
+    .row {
+        gap: 8px;
     }
-    .nearbyRow {
-        min-width: 0;
-    }
+}
+.planetNavLabel {
+    align-self: center;
+    font-size: 14px;
+    color: var(--muted-foreground);
+    margin-right: 2px;
 }

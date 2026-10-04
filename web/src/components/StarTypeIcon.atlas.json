@@ -1,0 +1,10 @@
+{
+    "yellow": { "x": 59, "y": 71, "width": 362, "height": 360 },
+    "orange": { "x": 492, "y": 75, "width": 362, "height": 360 },
+    "red": { "x": 937, "y": 61, "width": 362, "height": 360 },
+    "white": { "x": 1843, "y": 76, "width": 362, "height": 360 },
+    "yellow-flare": { "x": 55, "y": 494, "width": 369, "height": 368 },
+    "blue-flare": { "x": 489, "y": 494, "width": 369, "height": 368 },
+    "black-hole": { "x": 990, "y": 615, "width": 790, "height": 174 },
+    "neutron": { "x": 1870, "y": 527, "width": 362, "height": 360 }
+}

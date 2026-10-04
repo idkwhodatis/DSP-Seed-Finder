@@ -1,4 +1,7 @@
 import GameIcon from "../components/GameIcon"
+import StarTypeIcon, {
+    starIconAttributionHref,
+} from "../components/StarTypeIcon"
 import styles from "~styles"
 import Starmap from "./Starmap"
 import { type FC, Fragment } from "react"
@@ -97,6 +100,7 @@ const Vein: FC<{
 const GalaxyOverview: FC<{
     galaxy: Galaxy
     search: string
+    displayNames?: ReadonlyMap<number, string>
 }> = (props) => {
     const { t } = useLingui()
     const getStarType = useStarTypeFullName()
@@ -162,18 +166,49 @@ const GalaxyOverview: FC<{
             }),
         ]
         const counts: Record<string, number> = {}
+        const representatives: Record<string, Star> = {}
         for (const star of props.galaxy.stars) {
             const name = getStarType(star)
             counts[name] = (counts[name] ?? 0) + 1
+            representatives[name] = star
         }
         return order
             .filter((name) => counts[name])
-            .map((name) => [name, counts[name]!] as const)
+            .map(
+                (name) =>
+                    [name, counts[name]!, representatives[name]!] as const,
+            )
     }
     const allVeins = () => combineAllVeins(props.galaxy.stars)
     const allGases = () => combineAllGases(props.galaxy.stars)
     return (
         <div className={styles.root}>
+            <div className={styles.map}>
+                <div className={styles.mapHeader}>
+                    <span>{t`Starmap`}</span>
+                    <span
+                        className={styles.mapHint}
+                    >{t`Select a star to view its planets`}</span>
+                </div>
+                <Starmap
+                    galaxy={props.galaxy}
+                    search={props.search}
+                    displayNames={props.displayNames}
+                />
+                <div className={styles.mapFooter}>
+                    <span className={styles.startMarker} />
+                    {t`Starting system`}
+                    <span
+                        className={styles.mapHint}
+                    >{t`2D projection · All stars shown`}</span>
+                    <a
+                        className={styles.credits}
+                        href={starIconAttributionHref}
+                        target="_blank"
+                        rel="noreferrer"
+                    >{t`Icon credits`}</a>
+                </div>
+            </div>
             <div className={styles.info}>
                 <div className={styles.card}>
                     <div className={styles.title}>
@@ -188,20 +223,23 @@ const GalaxyOverview: FC<{
                             <div className={styles.title}>
                                 <span>{t`Star types`}</span>
                             </div>
-                            {starTypeCounts().map(([name, count], _index) => (
-                                <Fragment key={_index}>
-                                    {
-                                        <div className={styles.row}>
-                                            <div className={styles.field}>
-                                                {name}:
+                            {starTypeCounts().map(
+                                ([name, count, star], _index) => (
+                                    <Fragment key={_index}>
+                                        {
+                                            <div className={styles.row}>
+                                                <div className={styles.field}>
+                                                    <StarTypeIcon star={star} />
+                                                    {name}:
+                                                </div>
+                                                <div className={styles.value}>
+                                                    {count}
+                                                </div>
                                             </div>
-                                            <div className={styles.value}>
-                                                {count}
-                                            </div>
-                                        </div>
-                                    }
-                                </Fragment>
-                            ))}
+                                        }
+                                    </Fragment>
+                                ),
+                            )}
                         </div>
                     </>
                 ) : null}
@@ -256,9 +294,6 @@ const GalaxyOverview: FC<{
                         </div>
                     </>
                 ) : null}
-            </div>
-            <div className={styles.map}>
-                <Starmap galaxy={props.galaxy} search={props.search} />
             </div>
         </div>
     )

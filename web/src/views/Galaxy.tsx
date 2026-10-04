@@ -1,4 +1,6 @@
 import styles from "~styles"
+import StarTypeIcon from "../components/StarTypeIcon"
+import { getGalaxyDisplayNames } from "../lib/starNames"
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { useEffect, useMemo, useRef, type FC, type FormEvent } from "react"
 import { useLiveState } from "../hooks/useLiveState"
@@ -141,6 +143,7 @@ const StarSearch: FC<{
     onChangeRules: (value: SimpleRule[][]) => void
     results: integer[]
     onChangeResults: (value: integer[]) => void
+    displayNames: ReadonlyMap<number, string>
 }> = (props) => {
     const isRuleValid = validateRules(props.rules)
     const { t } = useLingui()
@@ -208,7 +211,13 @@ const StarSearch: FC<{
                         to={`/galaxy/${props.seed}/${index}${props.searchString}`}
                         className={styles.result}
                     >
-                        <span>{props.galaxy.stars[index]?.name}</span>
+                        {props.galaxy.stars[index] && (
+                            <StarTypeIcon star={props.galaxy.stars[index]!} />
+                        )}
+                        <span>
+                            {props.displayNames.get(index) ??
+                                props.galaxy.stars[index]?.name}
+                        </span>
                         <span className={styles.resultIndex}>#{index + 1}</span>
                     </Link>
                 ))}
@@ -285,7 +294,7 @@ const View: FC<{ seed: number; index?: number; isSearch: boolean }> = (
     const [starSearchResults, setStarSearchResults] = useLiveState<integer[]>(
         [],
     )
-    const { t } = useLingui()
+    const { t, i18n } = useLingui()
 
     useEffect(() => {
         let active = true
@@ -314,6 +323,13 @@ const View: FC<{ seed: number; index?: number; isSearch: boolean }> = (
     ])
 
     const current = request()
+    const displayNames = useMemo(
+        () =>
+            current.key === key && current.galaxy
+                ? getGalaxyDisplayNames(current.galaxy, i18n.locale)
+                : new Map<number, string>(),
+        [current, key, i18n.locale],
+    )
     if (current.key === key && current.failed)
         return (
             <div className={styles.loading} role="alert">
@@ -358,12 +374,23 @@ const View: FC<{ seed: number; index?: number; isSearch: boolean }> = (
                             <Link
                                 key={star.index}
                                 to={buildUrl(star.index)}
+                                aria-current={
+                                    star.index === props.index
+                                        ? "page"
+                                        : undefined
+                                }
                                 className={clsx(
                                     styles.star,
                                     star.index === props.index && styles.active,
                                 )}
                             >
-                                <span>{star.name}</span>
+                                <StarTypeIcon star={star} />
+                                <span
+                                    className={styles.starName}
+                                    title={star.name}
+                                >
+                                    {displayNames.get(star.index) ?? star.name}
+                                </span>
                                 <span className={styles.index}>
                                     #{star.index + 1}
                                 </span>
@@ -385,6 +412,7 @@ const View: FC<{ seed: number; index?: number; isSearch: boolean }> = (
                             }}
                             results={starSearchResults()}
                             onChangeResults={setStarSearchResults}
+                            displayNames={displayNames}
                         />
                     ) : props.index !== undefined ? (
                         selectedStar ? (
@@ -392,12 +420,17 @@ const View: FC<{ seed: number; index?: number; isSearch: boolean }> = (
                                 star={selectedStar}
                                 galaxy={galaxy}
                                 buildUrl={buildUrl}
+                                displayNames={displayNames}
                             />
                         ) : (
                             <div role="alert">{t`Invalid star index.`}</div>
                         )
                     ) : (
-                        <GalaxyOverview galaxy={galaxy} search={search} />
+                        <GalaxyOverview
+                            galaxy={galaxy}
+                            search={search}
+                            displayNames={displayNames}
+                        />
                     )}
                 </div>
             </div>

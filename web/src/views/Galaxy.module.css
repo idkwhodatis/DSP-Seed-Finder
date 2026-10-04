@@ -212,3 +212,40 @@
         min-height: 0;
     }
 }
+
+/* Keep the sidebar compact while the detail pane owns one clear scroll area. */
+.left {
+    border-right: 1px solid var(--border);
+}
+.star {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 36px;
+    padding: 6px 10px;
+}
+.starName {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.index {
+    margin-left: auto;
+    font-size: 13px;
+    flex: none;
+}
+.star:hover:not(.active) {
+    background: var(--muted);
+}
+.result {
+    align-items: center;
+    gap: 6px;
+}
+@media (max-width: 760px) {
+    .left {
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+    }
+    .star {
+        margin: 0;
+    }
+}

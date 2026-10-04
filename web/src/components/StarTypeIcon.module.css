@@ -1,0 +1,50 @@
+.icon {
+    display: inline-flex;
+    position: relative;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    margin-inline-end: 4px;
+    vertical-align: -3px;
+    pointer-events: none;
+}
+
+.art {
+    display: block;
+    flex: none;
+    background-repeat: no-repeat;
+}
+
+/* A compact pulse-axis cue distinguishes the neutron sprite from a white dwarf. */
+.icon[data-star-type="NeutronStar"]::before {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    left: calc(50% - 0.5px);
+    width: 1px;
+    background: linear-gradient(
+        transparent,
+        #8ee7ff 20%,
+        #e8fbff 50%,
+        #8ee7ff 80%,
+        transparent
+    );
+    transform: rotate(35deg);
+}
+
+.icon[data-star-type="NeutronStar"] .art {
+    z-index: 1;
+    border-radius: 50%;
+    box-shadow: 0 0 2px #8ee7ff;
+}
+
+.icon[data-star-type="WhiteDwarf"] .art {
+    border-radius: 50%;
+    box-shadow: 0 0 2px #c9d7ff;
+}
+
+.icon[data-star-type="BlackHole"] .art {
+    transform: rotate(-20deg);
+}

@@ -4,6 +4,8 @@ import { MemoryRouter, useLocation } from "react-router-dom"
 import { computePosition } from "@floating-ui/dom"
 import Starmap from "./Starmap"
 import { StarType } from "../enums"
+import { setupI18n } from "@lingui/core"
+import { I18nProvider } from "@lingui/react"
 
 vi.mock("@floating-ui/dom", () => ({ computePosition: vi.fn(), flip: vi.fn() }))
 afterEach(cleanup)
@@ -44,10 +46,12 @@ function Location() {
 }
 function content(value: Galaxy = galaxy) {
     return (
-        <MemoryRouter initialEntries={["/galaxy/0"]}>
-            <Starmap galaxy={value} search="?count=32" />
-            <Location />
-        </MemoryRouter>
+        <I18nProvider i18n={setupI18n({ locale: "en", messages: { en: {} } })}>
+            <MemoryRouter initialEntries={["/galaxy/0"]}>
+                <Starmap galaxy={value} search="?count=32" />
+                <Location />
+            </MemoryRouter>
+        </I18nProvider>
     )
 }
 
@@ -147,5 +151,23 @@ describe("starmap lifecycle and keyboard access", () => {
             "viewBox",
             "-2 -2 4 4",
         )
+    })
+})
+
+describe("complete galaxy framing", () => {
+    it("fits every star instead of cropping the map to fill the panel", () => {
+        const { container } = render(
+            content({
+                seed: 0,
+                stars: [
+                    { ...star, position: [-30, 0, -2] },
+                    { ...star, index: 1, name: "Beta", position: [30, 0, 2] },
+                ],
+            }),
+        )
+        const map = container.querySelector("svg")!
+        expect(map).toHaveAttribute("preserveAspectRatio", "xMidYMid meet")
+        expect(map).toHaveAttribute("viewBox", "-32 -4 64 8")
+        expect(map.querySelectorAll("circle[role=link]")).toHaveLength(2)
     })
 })

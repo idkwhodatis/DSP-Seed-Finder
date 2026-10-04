@@ -1,4 +1,5 @@
 import GameIcon from "../components/GameIcon"
+import StarTypeIcon from "../components/StarTypeIcon"
 import { useObjectState } from "../hooks/useLiveState"
 import { GasType, OceanType, PlanetType, StarType, VeinType } from "../enums"
 import {
@@ -176,7 +177,10 @@ const StarDetail: FC<{
         <>
             <div className={styles.row}>
                 <div className={styles.field}>{t`Type`}</div>
-                <div className={styles.value}>{getStarType(props.star)}</div>
+                <div className={styles.value}>
+                    <StarTypeIcon star={props.star} />
+                    {getStarType(props.star)}
+                </div>
             </div>
             <div className={styles.row}>
                 <div className={styles.field}>{t`Spectral class`}</div>
@@ -378,6 +382,7 @@ const NearbyStar: FC<{
     distance: float
     url: string
     newPage?: boolean
+    displayNames?: ReadonlyMap<number, string>
 }> = (props) => {
     const getStarType = useStarTypeFullName()
     return (
@@ -386,8 +391,12 @@ const NearbyStar: FC<{
             target={props.newPage ? "_blank" : undefined}
             className={clsx(styles.row, styles.nearbyRow)}
         >
-            <div>
-                <span>{props.star.name}</span>
+            <div className={styles.nearbyName}>
+                <StarTypeIcon star={props.star} />
+                <span>
+                    {props.displayNames?.get(props.star.index) ??
+                        props.star.name}
+                </span>
                 <span className={styles.index}>#{props.star.index + 1}</span>
             </div>
             <div>
@@ -404,6 +413,7 @@ const NearbyStar: FC<{
 const PlanetView: FC<{
     star: Star
     planet: Planet
+    displayNames?: ReadonlyMap<number, string>
 }> = (props) => {
     function isGas() {
         return props.planet.type === PlanetType.Gas
@@ -413,10 +423,21 @@ const PlanetView: FC<{
     const gasTypeNames = useGasTypeNames()
     const planetTypes = usePlanetTypeNames()
     return (
-        <div className={styles.planet}>
-            <div className={styles.planetName}>
-                {props.star.name} {romans[props.planet.index]}
-            </div>
+        <article
+            id={`star-${props.star.index}-planet-${props.planet.index}`}
+            className={clsx(styles.card, styles.planet)}
+            aria-labelledby={`star-${props.star.index}-planet-${props.planet.index}-name`}
+        >
+            <h3
+                id={`star-${props.star.index}-planet-${props.planet.index}-name`}
+                className={styles.planetName}
+            >
+                <span className={styles.planetNumber}>
+                    {romans[props.planet.index]}
+                </span>
+                {props.displayNames?.get(props.star.index) ?? props.star.name}{" "}
+                {romans[props.planet.index]}
+            </h3>
             {isGas() ? (
                 <>
                     <div className={styles.row}>
@@ -566,7 +587,7 @@ const PlanetView: FC<{
                     }
                 </Fragment>
             ))}
-        </div>
+        </article>
     )
 }
 const StarView: FC<{
@@ -574,6 +595,7 @@ const StarView: FC<{
     galaxy?: Galaxy
     buildUrl: (starIndex: integer) => string
     newPage?: boolean
+    displayNames?: ReadonlyMap<number, string>
 }> = (props) => {
     const [expand, setExpand] = useObjectState({
         detail: false,
@@ -591,71 +613,93 @@ const StarView: FC<{
     return (
         <div className={styles.view}>
             <div className={styles.main}>
-                <div className={styles.column}>
-                    <div className={styles.card}>
-                        <Expand
-                            expand={expand.detail}
-                            toggle={() => setExpand("detail", (x) => !x)}
-                        />
-                        <div className={styles.title}>
-                            <span>{props.star.name}</span>
-                            <span className={styles.index}>
-                                #{props.star.index + 1}
-                            </span>
-                        </div>
-                        <StarDetail
-                            star={props.star}
-                            expand={expand.detail}
-                            positions={xStarPostions()}
-                        />
-                    </div>
-                    <div className={styles.card}>
-                        <div className={styles.title}>
-                            <span>{t`Resources`}</span>
-                        </div>
-                        <StarVeins star={props.star} />
-                    </div>
-                </div>
-                {!!props.galaxy ? (
-                    <>
-                        <div className={styles.column}>
-                            <div className={styles.card}>
-                                <div className={styles.title}>
-                                    <span>{t`Nearby Stars`}</span>
-                                </div>
-                                {nearbyStars(
-                                    props.star,
-                                    props.galaxy!.stars,
-                                ).map(({ star, distance }, _index5) => (
-                                    <Fragment key={_index5}>
-                                        {
-                                            <NearbyStar
-                                                seed={props.galaxy!.seed}
-                                                star={star}
-                                                distance={distance}
-                                                url={props.buildUrl(star.index)}
-                                                newPage={props.newPage}
-                                            />
-                                        }
-                                    </Fragment>
-                                ))}
-                            </div>
-                        </div>
-                    </>
-                ) : null}
+                <section className={styles.card}>
+                    <Expand
+                        expand={expand.detail}
+                        toggle={() => setExpand("detail", (x) => !x)}
+                    />
+                    <h1 className={clsx(styles.title, styles.starTitle)}>
+                        <StarTypeIcon star={props.star} size={24} />
+                        <span>
+                            {props.displayNames?.get(props.star.index) ??
+                                props.star.name}
+                        </span>
+                        <span className={styles.index}>
+                            #{props.star.index + 1}
+                        </span>
+                    </h1>
+                    <nav
+                        className={styles.planetNav}
+                        aria-label={t`Jump to planet`}
+                    >
+                        <span className={styles.planetNavLabel}>
+                            {t`Planets`} · {props.star.planets.length}
+                        </span>
+                        {props.star.planets.map((planet) => (
+                            <a
+                                key={planet.index}
+                                className={styles.planetLink}
+                                href={`#star-${props.star.index}-planet-${planet.index}`}
+                            >
+                                {romans[planet.index]}
+                            </a>
+                        ))}
+                    </nav>
+                    <StarDetail
+                        star={props.star}
+                        expand={expand.detail}
+                        positions={xStarPostions()}
+                    />
+                </section>
+                <section className={styles.card}>
+                    <h2 className={styles.title}>{t`Resources`}</h2>
+                    <StarVeins star={props.star} />
+                </section>
             </div>
-            <div className={styles.column}>
-                <div className={clsx(styles.card, styles.planets)}>
-                    <div className={styles.title}>
-                        <span>{t`Planets`}</span>
-                    </div>
-                    {props.star.planets.map((planet, _index6) => (
-                        <Fragment key={_index6}>
-                            {<PlanetView star={props.star} planet={planet} />}
-                        </Fragment>
+            <section className={styles.planets} aria-label={t`Planets`}>
+                <h2 className={styles.title}>
+                    {t`Planets`}{" "}
+                    <span className={styles.count}>
+                        {props.star.planets.length}
+                    </span>
+                </h2>
+
+                <div className={styles.planetGrid}>
+                    {props.star.planets.map((planet) => (
+                        <PlanetView
+                            key={planet.index}
+                            star={props.star}
+                            planet={planet}
+                            displayNames={props.displayNames}
+                        />
                     ))}
                 </div>
-            </div>
+            </section>
+            {props.galaxy && (
+                <details className={clsx(styles.card, styles.nearby)}>
+                    <summary className={styles.title}>
+                        {t`Nearby Stars`}{" "}
+                        <span className={styles.count}>
+                            {props.galaxy.stars.length - 1}
+                        </span>
+                    </summary>
+                    <div className={styles.nearbyList}>
+                        {nearbyStars(props.star, props.galaxy.stars).map(
+                            ({ star, distance }) => (
+                                <NearbyStar
+                                    key={star.index}
+                                    seed={props.galaxy!.seed}
+                                    star={star}
+                                    distance={distance}
+                                    url={props.buildUrl(star.index)}
+                                    newPage={props.newPage}
+                                    displayNames={props.displayNames}
+                                />
+                            ),
+                        )}
+                    </div>
+                </details>
+            )}
         </div>
     )
 }

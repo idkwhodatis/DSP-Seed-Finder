@@ -1,0 +1,757 @@
+{
+    "provenance": "Code-derived via an independent Python implementation of the pinned MIT source; not captured from a running game. See docs/star-names-provenance.md.",
+    "nameSeeds": [
+        {
+            "nameSeed": 0,
+            "type": "MainSeqStar",
+            "name": "太阿",
+            "branch": "raw",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 1,
+            "type": "MainSeqStar",
+            "name": "宝瓶座 73",
+            "branch": "constellation-number",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 2,
+            "type": "MainSeqStar",
+            "name": "天市右垣一",
+            "branch": "raw",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 3,
+            "type": "MainSeqStar",
+            "name": "天龙座κ",
+            "branch": "constellation-alpha",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 4,
+            "type": "MainSeqStar",
+            "name": "太微左垣二",
+            "branch": "raw",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 42,
+            "type": "MainSeqStar",
+            "name": "波江座β",
+            "branch": "constellation-alpha",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 12345678,
+            "type": "MainSeqStar",
+            "name": "天枪一",
+            "branch": "raw",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 2147483646,
+            "type": "MainSeqStar",
+            "name": "天炉座 38",
+            "branch": "constellation-number",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 0,
+            "type": "GiantStar",
+            "name": "狮子座VB",
+            "branch": "giant-constellation",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 1,
+            "type": "GiantStar",
+            "name": "HV 9694",
+            "branch": "giant-catalog",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 2,
+            "type": "GiantStar",
+            "name": "天坛座SL",
+            "branch": "giant-constellation",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 3,
+            "type": "GiantStar",
+            "name": "HR 6914",
+            "branch": "giant-catalog",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 4,
+            "type": "GiantStar",
+            "name": "剑鱼座R",
+            "branch": "giant-raw",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 42,
+            "type": "GiantStar",
+            "name": "HDE 770998",
+            "branch": "giant-catalog",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 12345678,
+            "type": "GiantStar",
+            "name": "剑鱼座R",
+            "branch": "giant-raw",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 2147483646,
+            "type": "GiantStar",
+            "name": "狮子座CW",
+            "branch": "giant-raw",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 0,
+            "type": "WhiteDwarf",
+            "name": "太阿",
+            "branch": "raw",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 1,
+            "type": "WhiteDwarf",
+            "name": "宝瓶座 73",
+            "branch": "constellation-number",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 2,
+            "type": "WhiteDwarf",
+            "name": "天市右垣一",
+            "branch": "raw",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 3,
+            "type": "WhiteDwarf",
+            "name": "天龙座κ",
+            "branch": "constellation-alpha",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 4,
+            "type": "WhiteDwarf",
+            "name": "太微左垣二",
+            "branch": "raw",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 42,
+            "type": "WhiteDwarf",
+            "name": "波江座β",
+            "branch": "constellation-alpha",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 12345678,
+            "type": "WhiteDwarf",
+            "name": "天枪一",
+            "branch": "raw",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 2147483646,
+            "type": "WhiteDwarf",
+            "name": "天炉座 38",
+            "branch": "constellation-number",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 0,
+            "type": "NeutronStar",
+            "name": "NTR J1404-54",
+            "branch": "NeutronStar",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 1,
+            "type": "NeutronStar",
+            "name": "NTR J2345-00",
+            "branch": "NeutronStar",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 2,
+            "type": "NeutronStar",
+            "name": "NTR J0726-07",
+            "branch": "NeutronStar",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 3,
+            "type": "NeutronStar",
+            "name": "NTR J1607-13",
+            "branch": "NeutronStar",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 4,
+            "type": "NeutronStar",
+            "name": "NTR J0149+19",
+            "branch": "NeutronStar",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 42,
+            "type": "NeutronStar",
+            "name": "NTR J1859-24",
+            "branch": "NeutronStar",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 12345678,
+            "type": "NeutronStar",
+            "name": "NTR J1653+33",
+            "branch": "NeutronStar",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 2147483646,
+            "type": "NeutronStar",
+            "name": "NTR J0522-47",
+            "branch": "NeutronStar",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 0,
+            "type": "BlackHole",
+            "name": "DSR J1404-54",
+            "branch": "BlackHole",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 1,
+            "type": "BlackHole",
+            "name": "DSR J2345-00",
+            "branch": "BlackHole",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 2,
+            "type": "BlackHole",
+            "name": "DSR J0726-07",
+            "branch": "BlackHole",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 3,
+            "type": "BlackHole",
+            "name": "DSR J1607-13",
+            "branch": "BlackHole",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 4,
+            "type": "BlackHole",
+            "name": "DSR J0149+19",
+            "branch": "BlackHole",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 42,
+            "type": "BlackHole",
+            "name": "DSR J1859-24",
+            "branch": "BlackHole",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 12345678,
+            "type": "BlackHole",
+            "name": "DSR J1653+33",
+            "branch": "BlackHole",
+            "attempt": 0
+        },
+        {
+            "nameSeed": 2147483646,
+            "type": "BlackHole",
+            "name": "DSR J0522-47",
+            "branch": "BlackHole",
+            "attempt": 0
+        }
+    ],
+    "galaxies": [
+        {
+            "seed": 0,
+            "starCount": 64,
+            "index": 0,
+            "english": "Iota Sagittae",
+            "nameSeed": 1315536985,
+            "name": "狮子座ι",
+            "branch": "constellation-alpha",
+            "attempt": 0
+        },
+        {
+            "seed": 0,
+            "starCount": 64,
+            "index": 1,
+            "english": "DenebAlgedi",
+            "nameSeed": 1007757185,
+            "name": "奎宿二",
+            "branch": "raw",
+            "attempt": 0
+        },
+        {
+            "seed": 0,
+            "starCount": 64,
+            "index": 2,
+            "english": "Okda",
+            "nameSeed": 321470533,
+            "name": "织女二",
+            "branch": "raw",
+            "attempt": 0
+        },
+        {
+            "seed": 0,
+            "starCount": 64,
+            "index": 14,
+            "english": "Mira",
+            "nameSeed": 1616922018,
+            "name": "米拉变星",
+            "branch": "giant-raw",
+            "attempt": 0
+        },
+        {
+            "seed": 0,
+            "starCount": 64,
+            "index": 43,
+            "english": "CK Carinae",
+            "nameSeed": 1440293306,
+            "name": "船底座CK",
+            "branch": "giant-raw",
+            "attempt": 0
+        },
+        {
+            "seed": 0,
+            "starCount": 64,
+            "index": 60,
+            "english": "Gamma Hydrae",
+            "nameSeed": 389648765,
+            "name": "长蛇座γ",
+            "branch": "constellation-alpha",
+            "attempt": 0
+        },
+        {
+            "seed": 0,
+            "starCount": 64,
+            "index": 61,
+            "english": "Gomeisa",
+            "nameSeed": 409278331,
+            "name": "轸宿一",
+            "branch": "raw",
+            "attempt": 0
+        },
+        {
+            "seed": 0,
+            "starCount": 64,
+            "index": 62,
+            "english": "NTR J2334-29",
+            "nameSeed": 790890353,
+            "name": "NTR J2334-29",
+            "branch": "NeutronStar",
+            "attempt": 0
+        },
+        {
+            "seed": 0,
+            "starCount": 64,
+            "index": 63,
+            "english": "DSR J1127+35",
+            "nameSeed": 1949991159,
+            "name": "DSR J1127+35",
+            "branch": "BlackHole",
+            "attempt": 0
+        },
+        {
+            "seed": 1,
+            "starCount": 64,
+            "index": 0,
+            "english": "Delta Sagittae",
+            "nameSeed": 1009943115,
+            "name": "宝瓶座δ",
+            "branch": "constellation-alpha",
+            "attempt": 0
+        },
+        {
+            "seed": 1,
+            "starCount": 64,
+            "index": 1,
+            "english": "72 Comae Berenices",
+            "nameSeed": 576680372,
+            "name": "金牛座 72",
+            "branch": "constellation-number",
+            "attempt": 0
+        },
+        {
+            "seed": 1,
+            "starCount": 64,
+            "index": 2,
+            "english": "Mirzam",
+            "nameSeed": 526091242,
+            "name": "斗宿六",
+            "branch": "raw",
+            "attempt": 0
+        },
+        {
+            "seed": 1,
+            "starCount": 64,
+            "index": 9,
+            "english": "163 Telescopii",
+            "nameSeed": 830969737,
+            "name": "望远镜座WL",
+            "branch": "giant-constellation",
+            "attempt": 0
+        },
+        {
+            "seed": 1,
+            "starCount": 64,
+            "index": 28,
+            "english": "165 Aquarii",
+            "nameSeed": 1939507240,
+            "name": "宝瓶座VO",
+            "branch": "giant-constellation",
+            "attempt": 0
+        },
+        {
+            "seed": 1,
+            "starCount": 64,
+            "index": 38,
+            "english": "Vega",
+            "nameSeed": 892272916,
+            "name": "青丘",
+            "branch": "raw",
+            "attempt": 1
+        },
+        {
+            "seed": 1,
+            "starCount": 64,
+            "index": 47,
+            "english": "LBV 5081-39",
+            "nameSeed": 2018698656,
+            "name": "LBV 5081-39",
+            "branch": "giant-catalog",
+            "attempt": 0
+        },
+        {
+            "seed": 1,
+            "starCount": 64,
+            "index": 60,
+            "english": "Algieba",
+            "nameSeed": 1980553504,
+            "name": "轩辕十五",
+            "branch": "raw",
+            "attempt": 0
+        },
+        {
+            "seed": 1,
+            "starCount": 64,
+            "index": 61,
+            "english": "Propus",
+            "nameSeed": 2094439913,
+            "name": "天琴座β",
+            "branch": "constellation-alpha",
+            "attempt": 1
+        },
+        {
+            "seed": 1,
+            "starCount": 64,
+            "index": 62,
+            "english": "NTR J1818-27",
+            "nameSeed": 1865282137,
+            "name": "NTR J1818-27",
+            "branch": "NeutronStar",
+            "attempt": 0
+        },
+        {
+            "seed": 1,
+            "starCount": 64,
+            "index": 63,
+            "english": "DSR J1747+52",
+            "nameSeed": 262306526,
+            "name": "DSR J1747+52",
+            "branch": "BlackHole",
+            "attempt": 0
+        },
+        {
+            "seed": 42,
+            "starCount": 64,
+            "index": 0,
+            "english": "Alkaid",
+            "nameSeed": 1365496327,
+            "name": "天床二",
+            "branch": "raw",
+            "attempt": 0
+        },
+        {
+            "seed": 42,
+            "starCount": 64,
+            "index": 1,
+            "english": "Hasseleh",
+            "nameSeed": 82400215,
+            "name": "郎位二",
+            "branch": "raw",
+            "attempt": 0
+        },
+        {
+            "seed": 42,
+            "starCount": 64,
+            "index": 2,
+            "english": "Alpha Sagittae",
+            "nameSeed": 325605723,
+            "name": "船底座α",
+            "branch": "constellation-alpha",
+            "attempt": 0
+        },
+        {
+            "seed": 42,
+            "starCount": 64,
+            "index": 29,
+            "english": "V382 Carinae",
+            "nameSeed": 1625615702,
+            "name": "船底座V382",
+            "branch": "giant-raw",
+            "attempt": 0
+        },
+        {
+            "seed": 42,
+            "starCount": 64,
+            "index": 60,
+            "english": "λ Chamaeleontis",
+            "nameSeed": 635654746,
+            "name": "小犬座 57",
+            "branch": "constellation-number",
+            "attempt": 2
+        },
+        {
+            "seed": 42,
+            "starCount": 64,
+            "index": 61,
+            "english": "Unukalhai",
+            "nameSeed": 319104424,
+            "name": "内阶二",
+            "branch": "raw",
+            "attempt": 0
+        },
+        {
+            "seed": 42,
+            "starCount": 64,
+            "index": 62,
+            "english": "NTR J0226+55",
+            "nameSeed": 818188694,
+            "name": "NTR J0226+55",
+            "branch": "NeutronStar",
+            "attempt": 0
+        },
+        {
+            "seed": 42,
+            "starCount": 64,
+            "index": 63,
+            "english": "DSR J1838+57",
+            "nameSeed": 1934196924,
+            "name": "DSR J1838+57",
+            "branch": "BlackHole",
+            "attempt": 0
+        },
+        {
+            "seed": 12345678,
+            "starCount": 64,
+            "index": 0,
+            "english": "AngelStern",
+            "nameSeed": 1493302135,
+            "name": "天床三",
+            "branch": "raw",
+            "attempt": 0
+        },
+        {
+            "seed": 12345678,
+            "starCount": 64,
+            "index": 1,
+            "english": "Eta Caeli",
+            "nameSeed": 257377664,
+            "name": "巨爵座η",
+            "branch": "constellation-alpha",
+            "attempt": 0
+        },
+        {
+            "seed": 12345678,
+            "starCount": 64,
+            "index": 2,
+            "english": "Gemma",
+            "nameSeed": 56186020,
+            "name": "井宿二",
+            "branch": "raw",
+            "attempt": 0
+        },
+        {
+            "seed": 12345678,
+            "starCount": 64,
+            "index": 14,
+            "english": "BI Cygni",
+            "nameSeed": 331132003,
+            "name": "天鹅座BI",
+            "branch": "giant-raw",
+            "attempt": 0
+        },
+        {
+            "seed": 12345678,
+            "starCount": 64,
+            "index": 37,
+            "english": "Hamal",
+            "nameSeed": 4484740,
+            "name": "三角座α",
+            "branch": "raw",
+            "attempt": 1
+        },
+        {
+            "seed": 12345678,
+            "starCount": 64,
+            "index": 43,
+            "english": "NSV 2495",
+            "nameSeed": 1504757472,
+            "name": "NSV 2495",
+            "branch": "giant-catalog",
+            "attempt": 0
+        },
+        {
+            "seed": 12345678,
+            "starCount": 64,
+            "index": 60,
+            "english": "AlTinnin",
+            "nameSeed": 637384334,
+            "name": "女宿二",
+            "branch": "raw",
+            "attempt": 0
+        },
+        {
+            "seed": 12345678,
+            "starCount": 64,
+            "index": 61,
+            "english": "Tegmen",
+            "nameSeed": 1883737623,
+            "name": "中台一",
+            "branch": "raw",
+            "attempt": 0
+        },
+        {
+            "seed": 12345678,
+            "starCount": 64,
+            "index": 62,
+            "english": "NTR J2008-29",
+            "nameSeed": 1995030880,
+            "name": "NTR J2008-29",
+            "branch": "NeutronStar",
+            "attempt": 0
+        },
+        {
+            "seed": 12345678,
+            "starCount": 64,
+            "index": 63,
+            "english": "DSR J0316-05",
+            "nameSeed": 950608024,
+            "name": "DSR J0316-05",
+            "branch": "BlackHole",
+            "attempt": 0
+        },
+        {
+            "seed": 99999999,
+            "starCount": 64,
+            "index": 0,
+            "english": "AngelStern",
+            "nameSeed": 555158836,
+            "name": "天市左垣九",
+            "branch": "raw",
+            "attempt": 0
+        },
+        {
+            "seed": 99999999,
+            "starCount": 64,
+            "index": 1,
+            "english": "51 Microscopii",
+            "nameSeed": 630612964,
+            "name": "山案座 51",
+            "branch": "constellation-number",
+            "attempt": 0
+        },
+        {
+            "seed": 99999999,
+            "starCount": 64,
+            "index": 2,
+            "english": "Polaris",
+            "nameSeed": 719676906,
+            "name": "房宿三",
+            "branch": "raw",
+            "attempt": 0
+        },
+        {
+            "seed": 99999999,
+            "starCount": 64,
+            "index": 14,
+            "english": "LBV 1867-17",
+            "nameSeed": 139293008,
+            "name": "LBV 1867-17",
+            "branch": "giant-catalog",
+            "attempt": 0
+        },
+        {
+            "seed": 99999999,
+            "starCount": 64,
+            "index": 43,
+            "english": "HD 575404",
+            "nameSeed": 303829900,
+            "name": "HD 575404",
+            "branch": "giant-catalog",
+            "attempt": 0
+        },
+        {
+            "seed": 99999999,
+            "starCount": 64,
+            "index": 60,
+            "english": "γ Comae Berenices",
+            "nameSeed": 751170748,
+            "name": "天燕座γ",
+            "branch": "constellation-alpha",
+            "attempt": 0
+        },
+        {
+            "seed": 99999999,
+            "starCount": 64,
+            "index": 61,
+            "english": "Delta Lyncis",
+            "nameSeed": 1292738599,
+            "name": "雕具座δ",
+            "branch": "constellation-alpha",
+            "attempt": 0
+        },
+        {
+            "seed": 99999999,
+            "starCount": 64,
+            "index": 62,
+            "english": "NTR J2124+05",
+            "nameSeed": 26438467,
+            "name": "NTR J2124+05",
+            "branch": "NeutronStar",
+            "attempt": 0
+        },
+        {
+            "seed": 99999999,
+            "starCount": 64,
+            "index": 63,
+            "english": "DSR J2128+43",
+            "nameSeed": 1675256325,
+            "name": "DSR J2128+43",
+            "branch": "BlackHole",
+            "attempt": 0
+        }
+    ]
+}

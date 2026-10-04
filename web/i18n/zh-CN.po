@@ -47,6 +47,10 @@ msgstr "黑雾巢穴的 <0/> 数目 <1/>"
 msgid "<0/> to <1/>"
 msgstr "<0/> 至 <1/>"
 
+#: web/src/partials/GalaxyOverview.tsx:203
+msgid "2D projection · All stars shown"
+msgstr "二维投影 · 显示全部恒星"
+
 #: web/src/partials/RuleEditor.tsx:196
 msgid "actual"
 msgstr "实际"
@@ -62,7 +66,7 @@ msgid "Add OR rule"
 msgstr "添加 或 规则"
 
 #: web/src/exporter/workbookGenerator.worker.tsx:62
-#: web/src/partials/StarView.tsx:276
+#: web/src/partials/StarView.tsx:280
 msgid "Age"
 msgstr "年龄"
 
@@ -107,7 +111,7 @@ msgstr "自动保存间隔"
 msgid "Black Hole"
 msgstr "黑洞"
 
-#: web/src/partials/StarView.tsx:166
+#: web/src/partials/StarView.tsx:167
 msgid "Black Hole / Neutron Star"
 msgstr "黑洞 / 中子星"
 
@@ -144,7 +148,7 @@ msgstr "关闭"
 msgid "Coal"
 msgstr "煤矿"
 
-#: web/src/partials/StarView.tsx:154
+#: web/src/partials/StarView.tsx:155
 msgid "Collapse star details"
 msgstr "收起恒星详情"
 
@@ -181,13 +185,13 @@ msgstr "飓风石林"
 
 #: web/src/partials/ExportModal.tsx:321
 #: web/src/partials/ProgressEditor.tsx:231
-#: web/src/views/Galaxy.tsx:100
+#: web/src/views/Galaxy.tsx:102
 msgid "Dark Fog initial occupation"
 msgstr "黑雾初始占领情况"
 
 #: web/src/partials/ExportModal.tsx:337
 #: web/src/partials/ProgressEditor.tsx:274
-#: web/src/views/Galaxy.tsx:109
+#: web/src/views/Galaxy.tsx:111
 msgid "Dark Fog max density"
 msgstr "最大黑雾浓度"
 
@@ -209,7 +213,7 @@ msgstr "贫瘠荒漠"
 msgid "Deuterium"
 msgstr "重氢"
 
-#: web/src/partials/StarView.tsx:222
+#: web/src/partials/StarView.tsx:226
 msgid "Distance from furthest <0/>"
 msgstr "距离最远的<0/>"
 
@@ -217,7 +221,7 @@ msgstr "距离最远的<0/>"
 msgid "Distance from furthest X star"
 msgstr "距离最远的X型恒星"
 
-#: web/src/partials/StarView.tsx:201
+#: web/src/partials/StarView.tsx:205
 msgid "Distance from nearest <0/>"
 msgstr "距离最近的<0/>"
 
@@ -231,7 +235,7 @@ msgstr "距离其他恒星"
 
 #: web/src/exporter/workbookGenerator.worker.tsx:69
 #: web/src/names.tsx:40
-#: web/src/partials/StarView.tsx:192
+#: web/src/partials/StarView.tsx:196
 msgid "Distance from start"
 msgstr "距离初始星系"
 
@@ -274,8 +278,8 @@ msgstr "大约"
 
 #. placeholder {0}: min()
 #. placeholder {1}: max()
-#: web/src/partials/GalaxyOverview.tsx:87
-#: web/src/partials/StarView.tsx:304
+#: web/src/partials/GalaxyOverview.tsx:90
+#: web/src/partials/StarView.tsx:308
 msgid ""
 "Estimated:\n"
 "{0} - {1}"
@@ -294,7 +298,7 @@ msgstr "等于"
 msgid "excluding"
 msgstr "不包括"
 
-#: web/src/partials/StarView.tsx:154
+#: web/src/partials/StarView.tsx:155
 msgid "Expand star details"
 msgstr "展开恒星详情"
 
@@ -302,7 +306,7 @@ msgstr "展开恒星详情"
 #: web/src/partials/ExportModal.tsx:429
 #: web/src/views/FindGalaxy.tsx:528
 #: web/src/views/FindStar.tsx:317
-#: web/src/views/Galaxy.tsx:349
+#: web/src/views/Galaxy.tsx:365
 msgid "Export"
 msgstr "汇出"
 
@@ -317,7 +321,7 @@ msgid "Exporting {0} / {1}"
 msgstr "导出中 {0} / {1}"
 
 #. placeholder {0}: props.seed
-#: web/src/views/Galaxy.tsx:192
+#: web/src/views/Galaxy.tsx:195
 msgid "Find stars matching the following criteria in seed {0}."
 msgstr "在种子 {0} 中查找符合以下条件的恒星。"
 
@@ -352,12 +356,12 @@ msgstr "气态"
 #: web/src/names.tsx:84
 #: web/src/names.tsx:85
 #: web/src/names.tsx:103
-#: web/src/partials/StarView.tsx:428
+#: web/src/partials/StarView.tsx:449
 msgid "Gas Giant"
 msgstr "气态巨行星"
 
 #: web/src/names.tsx:52
-#: web/src/partials/GalaxyOverview.tsx:239
+#: web/src/partials/GalaxyOverview.tsx:277
 msgid "Gas rate"
 msgstr "采集气体速度"
 
@@ -450,7 +454,7 @@ msgstr "有至少一颗行星拥有 <0/> 海洋"
 msgid "Hive count"
 msgstr "巢穴数目"
 
-#: web/src/partials/StarView.tsx:479
+#: web/src/partials/StarView.tsx:500
 msgid "Horizontal rotation"
 msgstr "侧向自转"
 
@@ -465,13 +469,17 @@ msgstr "冰"
 
 #: web/src/names.tsx:86
 #: web/src/names.tsx:87
-#: web/src/partials/StarView.tsx:429
+#: web/src/partials/StarView.tsx:450
 msgid "Ice Giant"
 msgstr "冰巨行星"
 
 #: web/src/names.tsx:106
 msgid "Icefrostia"
 msgstr "极寒冻土"
+
+#: web/src/partials/GalaxyOverview.tsx:209
+msgid "Icon credits"
+msgstr "图标来源"
 
 #: web/src/partials/ProgressEditor.tsx:176
 msgid "Import seeds"
@@ -497,16 +505,16 @@ msgid "Initial"
 msgstr "起始"
 
 #: web/src/exporter/workbookGenerator.worker.tsx:72
-#: web/src/partials/StarView.tsx:246
+#: web/src/partials/StarView.tsx:250
 msgid "Initial number of hives"
 msgstr "起始巢穴数目"
 
-#: web/src/views/Galaxy.tsx:428
+#: web/src/views/Galaxy.tsx:461
 msgid "Invalid seed."
 msgstr "无效的种子。"
 
-#: web/src/views/Galaxy.tsx:397
-#: web/src/views/Galaxy.tsx:440
+#: web/src/views/Galaxy.tsx:426
+#: web/src/views/Galaxy.tsx:473
 msgid "Invalid star index."
 msgstr "无效的恒星序号。"
 
@@ -544,9 +552,13 @@ msgid "Is the Starting system"
 msgstr "是初始星系"
 
 #: web/src/partials/ExportModal.tsx:353
-#: web/src/views/Galaxy.tsx:119
+#: web/src/views/Galaxy.tsx:121
 msgid "It is much faster to estimate the amount of veins over generating the excat numbers."
 msgstr "估算资源比计算确切数量要快得多。"
+
+#: web/src/partials/StarView.tsx:633
+msgid "Jump to planet"
+msgstr "跳转到行星"
 
 #: web/src/exporter/workbookGenerator.worker.tsx:24
 #: web/src/names.tsx:71
@@ -569,13 +581,13 @@ msgstr "读取"
 msgid "Loading profiles…"
 msgstr "正在加载配置…"
 
-#: web/src/views/Galaxy.tsx:328
+#: web/src/views/Galaxy.tsx:344
 msgid "Loading..."
 msgstr "载入中..."
 
 #: web/src/exporter/workbookGenerator.worker.tsx:66
 #: web/src/names.tsx:43
-#: web/src/partials/StarView.tsx:186
+#: web/src/partials/StarView.tsx:190
 msgid "Luminosity"
 msgstr "亮度"
 
@@ -588,7 +600,7 @@ msgid "Maroonfrost"
 msgstr "灰烬冻土"
 
 #: web/src/exporter/workbookGenerator.worker.tsx:61
-#: web/src/partials/StarView.tsx:264
+#: web/src/partials/StarView.tsx:268
 msgid "Mass"
 msgstr "质量"
 
@@ -598,12 +610,12 @@ msgstr "最大"
 
 #: web/src/exporter/workbookGenerator.worker.tsx:68
 #: web/src/names.tsx:45
-#: web/src/partials/StarView.tsx:240
+#: web/src/partials/StarView.tsx:244
 msgid "Max dyson sphere radius"
 msgstr "戴森球最大半径"
 
 #: web/src/exporter/workbookGenerator.worker.tsx:73
-#: web/src/partials/StarView.tsx:252
+#: web/src/partials/StarView.tsx:256
 msgid "Maximum number of hives"
 msgstr "最大巢穴数目"
 
@@ -616,7 +628,7 @@ msgstr "名称"
 msgid "Native Mode"
 msgstr "本机模式"
 
-#: web/src/partials/StarView.tsx:624
+#: web/src/partials/StarView.tsx:681
 msgid "Nearby Stars"
 msgstr "附近恒星"
 
@@ -648,7 +660,7 @@ msgstr "不等于"
 
 #: web/src/partials/ExportModal.tsx:293
 #: web/src/partials/ProgressEditor.tsx:159
-#: web/src/views/Galaxy.tsx:85
+#: web/src/views/Galaxy.tsx:87
 msgid "Number of stars"
 msgstr "恒星数量"
 
@@ -657,10 +669,10 @@ msgid "Obliquity"
 msgstr "地轴倾角"
 
 #: web/src/names.tsx:51
-#: web/src/partials/StarView.tsx:342
-#: web/src/partials/StarView.tsx:353
-#: web/src/partials/StarView.tsx:539
-#: web/src/partials/StarView.tsx:550
+#: web/src/partials/StarView.tsx:346
+#: web/src/partials/StarView.tsx:357
+#: web/src/partials/StarView.tsx:560
+#: web/src/partials/StarView.tsx:571
 msgid "Ocean"
 msgstr "海洋"
 
@@ -682,8 +694,8 @@ msgid "Orbit longitude"
 msgstr "升交点经度"
 
 #: web/src/exporter/workbookGenerator.worker.tsx:85
-#: web/src/partials/StarView.tsx:433
-#: web/src/partials/StarView.tsx:487
+#: web/src/partials/StarView.tsx:454
+#: web/src/partials/StarView.tsx:508
 msgid "Orbit radius"
 msgstr "轨道半径"
 
@@ -691,11 +703,11 @@ msgstr "轨道半径"
 msgid "Orbital period"
 msgstr "公转周期"
 
-#: web/src/partials/StarView.tsx:464
+#: web/src/partials/StarView.tsx:485
 msgid "Orbital resonance 1 : 2"
 msgstr "轨道共振 1:2"
 
-#: web/src/partials/StarView.tsx:472
+#: web/src/partials/StarView.tsx:493
 msgid "Orbital resonance 1 : 4"
 msgstr "轨道共振 1:4"
 
@@ -724,7 +736,9 @@ msgstr "行星数量"
 msgid "Planet themes"
 msgstr "行星主题"
 
-#: web/src/partials/StarView.tsx:650
+#: web/src/partials/StarView.tsx:636
+#: web/src/partials/StarView.tsx:659
+#: web/src/partials/StarView.tsx:661
 msgid "Planets"
 msgstr "行星"
 
@@ -758,11 +772,11 @@ msgid "Provide a seed list to limit the search to these seeds only. Must be .txt
 msgstr "限制搜索范围于所提供的种子。文件格式必须为 .txt / .csv / .tsv。每行一个种子。最大10MB。"
 
 #: web/src/exporter/workbookGenerator.worker.tsx:67
-#: web/src/partials/StarView.tsx:258
+#: web/src/partials/StarView.tsx:262
 msgid "Radius"
 msgstr "半径"
 
-#: web/src/views/Galaxy.tsx:75
+#: web/src/views/Galaxy.tsx:77
 msgid "Random"
 msgstr "随机"
 
@@ -773,12 +787,12 @@ msgstr "红巨星"
 
 #: web/src/partials/ExportModal.tsx:305
 #: web/src/partials/ProgressEditor.tsx:190
-#: web/src/views/Galaxy.tsx:91
+#: web/src/views/Galaxy.tsx:93
 msgid "Resource multiplier"
 msgstr "资源倍率"
 
-#: web/src/partials/GalaxyOverview.tsx:212
-#: web/src/partials/StarView.tsx:614
+#: web/src/partials/GalaxyOverview.tsx:250
+#: web/src/partials/StarView.tsx:655
 msgid "Resources"
 msgstr "资源"
 
@@ -790,7 +804,7 @@ msgstr "继续"
 msgid "Retriving data"
 msgstr "检索数据中"
 
-#: web/src/views/Galaxy.tsx:323
+#: web/src/views/Galaxy.tsx:339
 msgid "Retry"
 msgstr "重试"
 
@@ -816,7 +830,7 @@ msgstr "频繁运行自动保存可能会降低搜索性能"
 msgid "Sakura Ocean"
 msgstr "樱林海"
 
-#: web/src/partials/StarView.tsx:448
+#: web/src/partials/StarView.tsx:469
 msgid "Satellite"
 msgstr "卫星"
 
@@ -836,19 +850,19 @@ msgstr "保存"
 msgid "Scorchedia"
 msgstr "干旱荒漠"
 
-#: web/src/views/Galaxy.tsx:199
-#: web/src/views/Galaxy.tsx:353
+#: web/src/views/Galaxy.tsx:202
+#: web/src/views/Galaxy.tsx:369
 msgid "Search"
 msgstr "搜索"
 
-#: web/src/views/Galaxy.tsx:199
+#: web/src/views/Galaxy.tsx:202
 msgid "Searching..."
 msgstr "正在搜索…"
 
 #: web/src/exporter/workbookGenerator.worker.tsx:55
 #: web/src/exporter/workbookGenerator.worker.tsx:79
-#: web/src/partials/GalaxyOverview.tsx:181
-#: web/src/views/Galaxy.tsx:62
+#: web/src/partials/GalaxyOverview.tsx:216
+#: web/src/views/Galaxy.tsx:64
 msgid "Seed"
 msgstr "种子"
 
@@ -865,6 +879,10 @@ msgstr "种子范围"
 msgid "Seed: "
 msgstr "种子: "
 
+#: web/src/partials/GalaxyOverview.tsx:191
+msgid "Select a star to view its planets"
+msgstr "选择恒星以查看其行星"
+
 #: web/src/names.tsx:35
 #: web/src/partials/RuleEditor.tsx:43
 msgid "Select..."
@@ -876,13 +894,13 @@ msgid "Silicon Ore"
 msgstr "硅石"
 
 #: web/src/exporter/workbookGenerator.worker.tsx:92
-#: web/src/partials/StarView.tsx:505
+#: web/src/partials/StarView.tsx:526
 msgid "Solar power"
 msgstr "光能利用率"
 
 #: web/src/exporter/workbookGenerator.worker.tsx:65
 #: web/src/names.tsx:44
-#: web/src/partials/StarView.tsx:182
+#: web/src/partials/StarView.tsx:186
 msgid "Spectral class"
 msgstr "光谱类型"
 
@@ -899,11 +917,13 @@ msgstr "恒星查找器"
 msgid "Star Finder is no longer supported. Please use Galaxy Finder instead."
 msgstr "恒星查找器已停用。请改用星系查找器。"
 
-#: web/src/partials/GalaxyOverview.tsx:189
+#: web/src/partials/GalaxyOverview.tsx:224
 msgid "Star types"
 msgstr "恒星类型"
 
-#: web/src/views/Galaxy.tsx:344
+#: web/src/partials/GalaxyOverview.tsx:188
+#: web/src/partials/Starmap.tsx:310
+#: web/src/views/Galaxy.tsx:360
 msgid "Starmap"
 msgstr "星系图"
 
@@ -912,6 +932,7 @@ msgid "Start"
 msgstr "开始搜索"
 
 #: web/src/names.tsx:38
+#: web/src/partials/GalaxyOverview.tsx:200
 msgid "Starting system"
 msgstr "初始星系"
 
@@ -930,13 +951,13 @@ msgstr "火山灰"
 
 #: web/src/exporter/workbookGenerator.worker.tsx:47
 #: web/src/partials/RuleEditor.tsx:298
-#: web/src/partials/StarView.tsx:351
-#: web/src/partials/StarView.tsx:548
+#: web/src/partials/StarView.tsx:355
+#: web/src/partials/StarView.tsx:569
 msgid "Sulfuric Acid"
 msgstr "硫酸"
 
 #: web/src/exporter/workbookGenerator.worker.tsx:63
-#: web/src/partials/StarView.tsx:270
+#: web/src/partials/StarView.tsx:274
 msgid "Temperature"
 msgstr "温度"
 
@@ -953,7 +974,7 @@ msgid "this ruleset"
 msgstr "此条件集"
 
 #: web/src/exporter/workbookGenerator.worker.tsx:84
-#: web/src/partials/StarView.tsx:456
+#: web/src/partials/StarView.tsx:477
 msgid "Tidally locked"
 msgstr "潮汐锁定"
 
@@ -975,9 +996,9 @@ msgid "Tropicana"
 msgstr "海洋丛林"
 
 #: web/src/exporter/workbookGenerator.worker.tsx:64
-#: web/src/partials/StarView.tsx:178
-#: web/src/partials/StarView.tsx:423
-#: web/src/partials/StarView.tsx:511
+#: web/src/partials/StarView.tsx:179
+#: web/src/partials/StarView.tsx:444
+#: web/src/partials/StarView.tsx:532
 msgid "Type"
 msgstr "类型"
 
@@ -989,7 +1010,7 @@ msgstr "恒星类型"
 msgid "Unable to complete the operation. Please try again."
 msgstr "无法完成操作，请重试。"
 
-#: web/src/views/Galaxy.tsx:320
+#: web/src/views/Galaxy.tsx:336
 msgid "Unable to generate this galaxy."
 msgstr "无法生成此星系。"
 
@@ -997,7 +1018,7 @@ msgstr "无法生成此星系。"
 msgid "Unable to load saved profiles. Please try again."
 msgstr "无法加载已保存的配置，请重试。"
 
-#: web/src/views/Galaxy.tsx:202
+#: web/src/views/Galaxy.tsx:205
 msgid "Unable to search this galaxy. Please try again."
 msgstr "无法搜索此星系，请重试。"
 
@@ -1013,7 +1034,7 @@ msgid "Untitled"
 msgstr "未命名"
 
 #: web/src/partials/ExportModal.tsx:355
-#: web/src/views/Galaxy.tsx:121
+#: web/src/views/Galaxy.tsx:123
 msgid "Use estimated veins"
 msgstr "估算资源数量"
 
@@ -1021,7 +1042,7 @@ msgstr "估算资源数量"
 msgid "Vein amount"
 msgstr "资源储量"
 
-#: web/src/views/Galaxy.tsx:82
+#: web/src/views/Galaxy.tsx:84
 msgid "View"
 msgstr "查看"
 
@@ -1039,8 +1060,8 @@ msgstr "警告：使用实际值会慢得多。"
 
 #: web/src/exporter/workbookGenerator.worker.tsx:46
 #: web/src/partials/RuleEditor.tsx:297
-#: web/src/partials/StarView.tsx:340
-#: web/src/partials/StarView.tsx:537
+#: web/src/partials/StarView.tsx:344
+#: web/src/partials/StarView.tsx:558
 msgid "Water"
 msgstr "水"
 
@@ -1056,7 +1077,7 @@ msgid "White Giant"
 msgstr "白巨星"
 
 #: web/src/exporter/workbookGenerator.worker.tsx:91
-#: web/src/partials/StarView.tsx:499
+#: web/src/partials/StarView.tsx:520
 msgid "Wind power"
 msgstr "风能利用率"
 
@@ -1064,7 +1085,7 @@ msgstr "风能利用率"
 msgid "X"
 msgstr "X"
 
-#: web/src/partials/StarView.tsx:166
+#: web/src/partials/StarView.tsx:167
 msgid "X star"
 msgstr "X型恒星"
 
