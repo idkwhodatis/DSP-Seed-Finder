@@ -160,6 +160,35 @@ describe("complete planet details", () => {
         )
         expect(star.name).toBe("Test Star")
     })
+    it("keeps planet label/value pairs adjacent in a compact shared grid", () => {
+        render(content())
+        const planets = screen.getAllByRole("article")
+        for (const [planet, label, value] of [
+            [planets[0]!, "Type", "Ice Giant"],
+            [planets[0]!, "Hydrogen", "0.5 /s"],
+            [planets[1]!, "Wind power", "100%"],
+            [planets[1]!, "Iron Ore", "1,000"],
+            [planets[1]!, "Water", "Ocean"],
+        ] as const) {
+            const field = within(planet).getByText(label)
+            expect(field.nextElementSibling).toHaveTextContent(value)
+            expect(field.parentElement?.children).toHaveLength(2)
+        }
+        expect(
+            within(planets[1]!).getByText("Satellite").children,
+        ).toHaveLength(0)
+        const css = readFileSync("web/src/partials/StarView.module.css", "utf8")
+        expect(css).toMatch(
+            /\.planet \{[^}]*grid-template-columns: fit-content\(45%\) minmax\(0, 1fr\)/,
+        )
+        expect(css).toMatch(
+            /\.planet > \.row \{[^}]*grid-template-columns: subgrid/,
+        )
+        expect(css).toMatch(
+            /\.planet > \.row > \.value \{[^}]*text-align: left;[^}]*overflow-wrap: anywhere/,
+        )
+        expect(css).toMatch(/\.planetName \{[^}]*grid-column: 1 \/ -1/)
+    })
     it("always shows full star details and keeps all planets after navigation", () => {
         const { rerender } = render(content())
         for (const label of ["Radius", "Mass", "Temperature", "Age"]) {

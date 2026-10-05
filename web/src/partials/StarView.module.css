@@ -154,12 +154,33 @@
 .planet {
     min-width: 0;
     scroll-margin-top: 12px;
+    display: grid;
+    grid-template-columns: fit-content(45%) minmax(0, 1fr);
+    column-gap: 12px;
+}
+/* Share the natural label width across this card, without spreading values
+   across the whole planet pane. Long translations can wrap on narrow screens. */
+.planet > .row {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+    column-gap: inherit;
+    justify-content: normal;
+}
+.planet > .row:not(:has(> .field)) {
+    display: block;
+}
+.planet > .row > .value {
+    min-width: 0;
+    text-align: left;
+    overflow-wrap: anywhere;
 }
 .planet:target {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
 }
 .planetName {
+    grid-column: 1 / -1;
     display: flex;
     align-items: center;
     flex-wrap: wrap;
