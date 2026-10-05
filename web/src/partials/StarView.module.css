@@ -1,5 +1,7 @@
 /* Desktop overview and planet list scroll independently inside the available pane. */
 .view {
+    --detail-label-width: 13rem;
+    --detail-column-gap: 40px;
     height: 100%;
     min-height: 0;
     overflow: hidden;
@@ -160,13 +162,26 @@
     max-width: 100%;
     min-width: 0;
     scroll-margin-top: 12px;
-    display: grid;
-    grid-template-columns: minmax(0, max-content) minmax(0, max-content);
-    column-gap: 24px;
 }
-/* Share the natural label width across this card, without spreading values
-   across the whole planet pane. Long translations can wrap on narrow screens. */
-.planet > .row {
+/* System and planet cards use the same roomy columns. Content-sized value
+   tracks avoid stretching across the pane; narrow screens share smaller tokens. */
+.detailCard {
+    width: max-content;
+    max-width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, var(--detail-label-width)) minmax(
+            0,
+            max-content
+        );
+    column-gap: var(--detail-column-gap);
+}
+.detailCard > .title,
+.detailCard > .planetNav {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    grid-column: 1 / -1;
+}
+.detailCard > .row {
     padding: 5px 0;
     grid-column: 1 / -1;
     display: grid;
@@ -174,10 +189,10 @@
     column-gap: inherit;
     justify-content: normal;
 }
-.planet > .row:not(:has(> .field)) {
+.detailCard > .row:not(:has(> .field)) {
     display: block;
 }
-.planet > .row > .value {
+.detailCard > .row > .value {
     min-width: 0;
     text-align: left;
     overflow-wrap: anywhere;
@@ -215,6 +230,8 @@
 }
 @media (max-width: 1080px) {
     .view {
+        --detail-label-width: 10rem;
+        --detail-column-gap: 32px;
         display: flex;
         flex-direction: column;
         overflow-y: auto;
@@ -231,7 +248,17 @@
         height: min(70dvh, 100%);
     }
 }
+/* Avoid squeezing the shared detail columns beside the fixed star sidebar. */
+@media (max-width: 960px) {
+    .main {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
 @media (max-width: 760px) {
+    .view {
+        --detail-label-width: 8rem;
+        --detail-column-gap: 24px;
+    }
     .main {
         grid-template-columns: minmax(0, 1fr);
     }

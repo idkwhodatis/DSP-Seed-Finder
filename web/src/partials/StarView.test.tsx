@@ -11,6 +11,7 @@ import { MemoryRouter, useLocation } from "react-router-dom"
 import { I18nProvider } from "@lingui/react"
 import { setupI18n } from "@lingui/core"
 import StarView from "./StarView"
+import styles from "./StarView.module.css"
 import {
     GasType,
     OceanType,
@@ -160,9 +161,16 @@ describe("complete planet details", () => {
         )
         expect(star.name).toBe("Test Star")
     })
-    it("keeps planet label/value pairs aligned with breathing room in content-sized cards", () => {
+    it("uses the same roomy label/value grid for system and planet details", () => {
         render(content())
         const planets = screen.getAllByRole("article")
+        const overview = screen.getByRole("region", { name: "Test Star #1" })
+        for (const card of [
+            ...Array.from(overview.querySelectorAll(":scope > section")),
+            ...planets,
+        ]) {
+            expect(card).toHaveClass(styles.detailCard!)
+        }
         for (const [planet, label, value] of [
             [planets[0]!, "Type", "Ice Giant"],
             [planets[0]!, "Hydrogen", "0.5 /s"],
@@ -179,22 +187,32 @@ describe("complete planet details", () => {
         ).toHaveLength(0)
         const css = readFileSync("web/src/partials/StarView.module.css", "utf8")
         expect(css).toMatch(
-            /\.planet \{[^}]*grid-template-columns: minmax\(0, max-content\) minmax\(0, max-content\)/,
+            /\.detailCard \{[^}]*grid-template-columns:[^;]*var\(--detail-label-width\)[^;]*max-content/,
         )
         expect(css).toMatch(
-            /\.planet > \.row \{[^}]*grid-template-columns: subgrid/,
+            /\.detailCard > \.row \{[^}]*grid-template-columns: subgrid/,
         )
         expect(css).toMatch(
-            /\.planet > \.row > \.value \{[^}]*text-align: left;[^}]*overflow-wrap: anywhere/,
+            /\.detailCard > \.row > \.value \{[^}]*text-align: left;[^}]*overflow-wrap: anywhere/,
         )
         expect(css).toMatch(
-            /\.planet \{[^}]*width: max-content;[^}]*max-width: 100%;[^}]*column-gap: 24px/,
+            /\.detailCard \{[^}]*width: max-content;[^}]*max-width: 100%;[^}]*column-gap: var\(--detail-column-gap\)/,
         )
         expect(css).toMatch(
             /\.planets \{[^}]*width: fit-content;[^}]*max-width: 100%/,
         )
         expect(css).toMatch(/\.planetGrid \{[^}]*justify-items: start/)
-        expect(css).toMatch(/\.planet > \.row \{[^}]*padding: 5px 0/)
+        expect(css).toMatch(/\.detailCard > \.row \{[^}]*padding: 5px 0/)
+        expect(css).toContain("--detail-label-width: 13rem")
+        expect(css).toContain("--detail-column-gap: 40px")
+        expect(css).toMatch(
+            /@media \(max-width: 960px\) \{\s*\.main \{\s*grid-template-columns: minmax\(0, 1fr\)/,
+        )
+        expect(overview.querySelector("details")).not.toHaveClass(
+            styles.detailCard!,
+        )
+        expect(css).toContain("--detail-label-width: 8rem")
+        expect(css).toContain("--detail-column-gap: 24px")
         expect(css).toMatch(/\.planetName \{[^}]*overflow-wrap: anywhere/)
         expect(css).toMatch(/\.planetName \{[^}]*grid-column: 1 \/ -1/)
     })

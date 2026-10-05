@@ -397,7 +397,7 @@ const PlanetView: FC<{
     return (
         <article
             id={`star-${props.star.index}-planet-${props.planet.index}`}
-            className={clsx(styles.card, styles.planet)}
+            className={clsx(styles.card, styles.detailCard, styles.planet)}
             aria-labelledby={`star-${props.star.index}-planet-${props.planet.index}-name`}
         >
             <h3
@@ -597,7 +597,7 @@ const StarView: FC<{
                 tabIndex={0}
                 aria-labelledby={`star-${props.star.index}-title`}
             >
-                <section className={styles.card}>
+                <section className={clsx(styles.card, styles.detailCard)}>
                     <h1
                         className={styles.title}
                         id={`star-${props.star.index}-title`}
@@ -649,7 +649,7 @@ const StarView: FC<{
                     </nav>
                     <StarDetail star={props.star} positions={xStarPostions()} />
                 </section>
-                <section className={styles.card}>
+                <section className={clsx(styles.card, styles.detailCard)}>
                     <h2 className={styles.title}>{t`Resources`}</h2>
                     <StarVeins star={props.star} />
                 </section>
