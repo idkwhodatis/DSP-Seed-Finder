@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter, useLocation } from "react-router-dom"
 import { computePosition, offset } from "@floating-ui/dom"
 import Starmap from "./Starmap"
+import { getStellarProfile } from "./GalaxyAnimation.stellar"
 import { StarType } from "../enums"
 import { setupI18n } from "@lingui/core"
 import { I18nProvider } from "@lingui/react"
@@ -35,6 +36,7 @@ const star = {
     position: [0, 0, 0],
     type: StarType.MainSeqStar,
     color: 0.5,
+    radius: 1,
 } as Star
 const galaxy: Galaxy = { seed: 0, stars: [star] }
 const position: Awaited<ReturnType<typeof computePosition>> = {
@@ -190,6 +192,118 @@ describe("complete galaxy framing", () => {
 })
 
 describe("centered stellar highlights and layered rendering", () => {
+    it.each([
+        { type: StarType.MainSeqStar, radius: 0.55 },
+        { type: StarType.MainSeqStar, radius: 3 },
+        { type: StarType.GiantStar, radius: 16 },
+        { type: StarType.WhiteDwarf, radius: 0.25 },
+        { type: StarType.NeutronStar, radius: 0.4 },
+        { type: StarType.BlackHole, radius: 4 },
+    ])(
+        "keeps $type radius $radius aligned between GPU, fallback, mask and interaction",
+        ({ type, radius }) => {
+            vi.mocked(computePosition).mockResolvedValue(position)
+            const input: Star = {
+                ...star,
+                type,
+                radius,
+                position: [-17.25, 3, 8.75],
+            }
+            const { container } = render(content({ seed: 0, stars: [input] }))
+            const node = screen.getByRole("link", { name: "Alpha, #1" })
+            const profile = getStellarProfile(input)
+            const diskSelector =
+                type === StarType.BlackHole
+                    ? "[data-star-fallback] circle[fill='#030710']"
+                    : "[data-star-fallback] circle[fill^='url(']"
+            const disk = container.querySelector(diskSelector)!
+            expect(Number(disk.getAttribute("r"))).toBe(profile.radius)
+            expect(Number(node.getAttribute("r"))).toBe(
+                Math.max(0.4, profile.radius),
+            )
+            expect(
+                Number(
+                    container
+                        .querySelector("[data-star-occlusion]")!
+                        .getAttribute("r"),
+                ),
+            ).toBe(profile.radius + 0.06)
+            for (const element of [node, disk]) {
+                expect(element).toHaveAttribute("cx", "-17.25")
+                expect(element).toHaveAttribute("cy", "-8.75")
+            }
+            fireEvent.focus(node)
+            const highlight = container.querySelector("[data-star-highlight]")!
+            expect(Number(highlight.getAttribute("r"))).toBe(
+                profile.radius + 0.3,
+            )
+            expect(highlight).toHaveAttribute("cx", "-17.25")
+            expect(highlight).toHaveAttribute("cy", "-8.75")
+            for (const status of [
+                "animated",
+                "static",
+                "unavailable",
+                "animated",
+                "unavailable",
+            ] as const) {
+                act(() => animation.report?.(status))
+                expect(screen.getByRole("link", { name: "Alpha, #1" })).toBe(
+                    node,
+                )
+                expect(Number(node.getAttribute("r"))).toBe(
+                    Math.max(0.4, profile.radius),
+                )
+                if (status === "unavailable") {
+                    expect(
+                        Number(
+                            container
+                                .querySelector(diskSelector)!
+                                .getAttribute("r"),
+                        ),
+                    ).toBe(profile.radius)
+                } else {
+                    expect(container.querySelector(diskSelector)).toBeNull()
+                }
+            }
+            fireEvent.keyDown(node, { key: "Enter" })
+            expect(screen.getByTestId("location")).toHaveTextContent(
+                "/galaxy/0/0?count=32",
+            )
+        },
+    )
+
+    it("keeps compact-star hit areas at least 24px wide across viewport resizes", () => {
+        let width = 20
+        const rect = vi
+            .spyOn(SVGElement.prototype, "getBoundingClientRect")
+            .mockImplementation(() => new DOMRect(0, 0, width, width))
+        try {
+            const input = { ...star, type: StarType.NeutronStar, radius: 0.4 }
+            const { container } = render(content({ seed: 0, stars: [input] }))
+            const node = screen.getByRole("link", { name: "Alpha, #1" })
+            for (const nextWidth of [20, 40, 400, 20]) {
+                width = nextWidth
+                fireEvent.resize(window)
+                const pixelsPerUnit = width / 4
+                const hitDiameter =
+                    Number(node.getAttribute("r")) * 2 * pixelsPerUnit +
+                    Number(node.getAttribute("stroke-width"))
+                expect(hitDiameter).toBeGreaterThanOrEqual(24)
+                expect(Number(node.getAttribute("r"))).toBeGreaterThanOrEqual(
+                    0.4,
+                )
+                const disk = container.querySelector(
+                    "[data-star-fallback] circle[fill^='url(']",
+                )!
+                expect(Number(disk.getAttribute("r"))).toBe(
+                    getStellarProfile(input).radius,
+                )
+            }
+        } finally {
+            rect.mockRestore()
+        }
+    })
+
     it.each(Object.values(StarType))(
         "centers the custom focus marker exactly on a %s",
         (type) => {

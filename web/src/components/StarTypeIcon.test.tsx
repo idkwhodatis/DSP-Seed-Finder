@@ -76,6 +76,48 @@ describe("compact licensed star icons", () => {
         expect(new Set(appearances).size).toBe(7)
     })
 
+    it("outlines pale sprites in light theme without changing their type colors", () => {
+        const css = readFileSync(
+            "web/src/components/StarTypeIcon.module.css",
+            "utf8",
+        )
+        // Keep contrast on the wrapper so each sprite retains its own color filter.
+        expect(css).toMatch(
+            /\.icon\s*\{[^}]*filter:\s*drop-shadow\(0 0 0\.75px rgb\(15 23 42 \/ 75%\)\)/,
+        )
+        expect(css).toMatch(/:global\(\.dark\) \.icon\s*\{\s*filter: none;/)
+
+        const paleStars = [
+            [StarType.MainSeqStar, SpectrType.A, "white", ""],
+            [
+                StarType.MainSeqStar,
+                SpectrType.F,
+                "yellow",
+                "saturate(0.3) brightness(1.15)",
+            ],
+            [
+                StarType.GiantStar,
+                SpectrType.A,
+                "blue-flare",
+                "saturate(0) brightness(1.15)",
+            ],
+            [StarType.WhiteDwarf, SpectrType.X, "white", ""],
+            [StarType.NeutronStar, SpectrType.X, "neutron", ""],
+        ] as const
+        for (const [type, spectr, sprite, filter] of paleStars) {
+            const { container } = render(
+                <StarTypeIcon star={star(type, spectr)} />,
+            )
+            const icon = iconIn(container)
+            expect(icon.dataset.starIcon).toBe(sprite)
+            expect((icon.firstElementChild as HTMLElement).style.filter).toBe(
+                filter,
+            )
+            expect(icon.style.width).toBe("18px")
+            expect(icon.style.height).toBe("18px")
+        }
+    })
+
     it.each([
         [SpectrType.M, "yellow-flare", "hue-rotate(-35deg) saturate(1.8)"],
         [SpectrType.K, "yellow-flare", "hue-rotate(-35deg) saturate(1.8)"],

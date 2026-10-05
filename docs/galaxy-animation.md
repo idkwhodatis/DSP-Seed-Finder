@@ -4,7 +4,7 @@ The map keeps its generated star positions, complete `xMidYMid meet` framing, co
 
 ## Stellar appearances
 
-`GalaxyAnimation.stellar.ts` supplies a small, Three-independent visual model. Its shared disk-radius helper is used by the SVG and WebGL layers: main-sequence, neutron, and black-hole disks have radius 0.4 map units, giants 0.8, and white dwarfs 0.2. These are useful map symbols, not physical relative sizes. No screen-pixel minimum or device-dependent point-size clamp changes their centers or radii.
+`GalaxyAnimation.stellar.ts` supplies a small, Three-independent visual model. Its shared disk-radius helper is used by the SVG and WebGL layers. Physical generator radius is compressed monotonically as `max(0.14, 0.8 * radius / (1 + radius))`: a radius of 1 maps to 0.4 map units and very large stars approach 0.8. Small main-sequence stars and neutron stars are visibly smaller, while red giants remain large because color does not determine size. Invalid radii use the radius-1 fallback. The readable visual floor is in map units; no device-dependent point-size clamp changes centers or radii. Transparent hit targets are separate, retaining at least the original 0.4 map-unit radius and a 24-screen-pixel diameter after resizing.
 
 `GalaxyAnimation.shaders.ts` contains the original procedural shader:
 

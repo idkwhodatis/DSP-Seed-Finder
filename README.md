@@ -62,6 +62,8 @@ cargo run   # for native mode
 
 The interface uses React 19, React Router, Tailwind 4 and compact shadcn-style Radix controls. The desktop finder keeps its two-column settings, 32px controls, and original text scale; narrow screens wrap instead of requiring horizontal page scrolling. Resource icons are decorative 18px inline atlas sprites. Their provenance, game-art ownership, and calculator license are in `web/public/icons/ATTRIBUTION.md`.
 
+System details are always expanded. On desktop the overview and single-column planet list scroll independently; narrow layouts stack the overview above a bounded, independently scrollable planet list. Planet jump links preserve galaxy parameters and support repeated activation and direct hashes.
+
 Existing browser profiles, IndexedDB stores, local preferences, routes/query parameters, English/Chinese catalogs, the Rust generator, native WebSocket protocol, and worker-based searches are retained. Browser searches use isolated worker pools and ordered persistence checkpoints; exports support cancellation even during workbook generation.
 
 Run `npm ci`, then `npm run build` (Rust and wasm-pack required). `binaryen` is pinned in dev dependencies to provide `wasm-opt` reproducibly. `npm run build:web` can also be run separately once `pkg/` exists. A Windows executable is included as a download only when `target/release/dsp_seed.exe` is present; Linux/macOS web builds do not require that file. Native mode remains available with a separately built local binary.

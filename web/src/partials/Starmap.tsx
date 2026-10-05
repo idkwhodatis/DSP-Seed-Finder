@@ -190,11 +190,18 @@ const StarNode: FC<{
     const size = getStellarDiskRadius(props.star)
     const x = props.star.position[0]
     const y = -props.star.position[2]
+    // Compact stars keep the normal map target and at least a 24px diameter
+    // (including the transparent 4px stroke on either side) after resizing.
+    const hitRadius = Math.max(
+        size,
+        0.4,
+        props.pixelsPerUnit ? 8 / props.pixelsPerUnit : 0,
+    )
     const highlightRadius =
         size + (props.pixelsPerUnit ? 3 / props.pixelsPerUnit : 0.3)
     const dashRadius = highlightRadius * (props.pixelsPerUnit ?? 1)
     const starStyle: SVGProps<SVGCircleElement> = {
-        r: size,
+        r: hitRadius,
         cx: x,
         cy: y,
         fill: "transparent",

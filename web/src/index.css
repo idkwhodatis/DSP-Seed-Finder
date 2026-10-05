@@ -86,9 +86,12 @@
             "Microsoft YaHei",
             sans-serif;
     }
+    a[href],
+    area[href],
+    summary,
     button:not(:disabled),
     [role="button"]:not(:disabled) {
-        cursor: pointer;
+        cursor: default;
     }
     button,
     input,

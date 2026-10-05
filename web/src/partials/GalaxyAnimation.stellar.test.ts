@@ -8,36 +8,123 @@ import {
 
 const types = Object.values(StarType)
 
+const representativeStars = [
+    { type: StarType.MainSeqStar, radius: 1, kind: STELLAR_KIND.photosphere },
+    { type: StarType.GiantStar, radius: 16, kind: STELLAR_KIND.giant },
+    { type: StarType.WhiteDwarf, radius: 0.25, kind: STELLAR_KIND.whiteDwarf },
+    { type: StarType.NeutronStar, radius: 0.4, kind: STELLAR_KIND.neutronStar },
+    { type: StarType.BlackHole, radius: 4, kind: STELLAR_KIND.blackHole },
+]
+
 describe("stellar impostor profiles", () => {
-    it.each([
-        [StarType.MainSeqStar, 0.4, STELLAR_KIND.photosphere],
-        [StarType.GiantStar, 0.8, STELLAR_KIND.giant],
-        [StarType.WhiteDwarf, 0.2, STELLAR_KIND.whiteDwarf],
-        [StarType.NeutronStar, 0.4, STELLAR_KIND.neutronStar],
-        [StarType.BlackHole, 0.4, STELLAR_KIND.blackHole],
-    ])(
-        "keeps %s aligned with its SVG disk and gives it its own shader path",
-        (type, radius, kind) => {
-            const star = { type, color: 0.5 }
-            expect(getStellarDiskRadius(star)).toBe(radius)
-            expect(getStellarProfile(star)).toMatchObject({ radius, kind })
+    it.each(representativeStars)(
+        "keeps $type aligned with its SVG disk and gives it its own shader path",
+        ({ type, radius, kind }) => {
+            const star = { type, radius, color: 0.5 }
+            expect(getStellarProfile(star)).toMatchObject({
+                radius: getStellarDiskRadius(star),
+                kind,
+            })
         },
     )
 
-    it("keeps every effect inside the existing 2-unit framing margin", () => {
+    it("shrinks neutron stars and small red main-sequence stars using their actual radii", () => {
+        const solar = getStellarProfile({
+            type: StarType.MainSeqStar,
+            color: 0.5,
+            radius: 1,
+        })
+        const red = getStellarProfile({
+            type: StarType.MainSeqStar,
+            color: 0,
+            radius: 0.55,
+        })
+        const neutron = getStellarProfile({
+            type: StarType.NeutronStar,
+            color: 0.5,
+            radius: 0.4,
+        })
+        expect(solar.radius).toBe(0.4)
+        expect(red.radius).toBeLessThan(solar.radius * 0.75)
+        expect(neutron.radius).toBeLessThan(red.radius)
+    })
+
+    it("compresses physical radius differences while preserving their ordering", () => {
+        const radii = [0.25, 0.4, 0.55, 1, 3, 8, 16, 24]
+        const disks = radii.map((radius) => getStellarDiskRadius({ radius }))
+        for (let index = 1; index < radii.length; index++) {
+            expect(disks[index]).toBeGreaterThan(disks[index - 1]!)
+            expect(disks[index]! / disks[index - 1]!).toBeLessThan(
+                radii[index]! / radii[index - 1]!,
+            )
+        }
+        expect(getStellarDiskRadius({ radius: 1e-12 })).toBe(0.14)
+        expect(getStellarDiskRadius({ radius: Number.MAX_VALUE })).toBe(0.8)
+    })
+
+    it("does not shrink red giants or otherwise infer radius from color or type", () => {
+        for (const radius of [0.4, 1, 8, 16]) {
+            const expected = getStellarDiskRadius({ radius })
+            for (const type of types) {
+                for (const color of [0, 0.5, 1]) {
+                    expect(
+                        getStellarProfile({ type, color, radius }).radius,
+                    ).toBe(expected)
+                }
+            }
+        }
+        const redGiant = getStellarProfile({
+            type: StarType.GiantStar,
+            color: 0,
+            radius: 16,
+        })
+        const blueGiant = getStellarProfile({
+            type: StarType.GiantStar,
+            color: 1,
+            radius: 8,
+        })
+        expect(redGiant.radius).toBeGreaterThan(blueGiant.radius)
+        expect(redGiant.radius).toBeGreaterThan(0.7)
+    })
+
+    it("keeps every effect inside the existing 2-unit framing margin at every size", () => {
         for (const type of types) {
-            const { radius, extent } = getStellarProfile({ type, color: 0.5 })
-            expect(radius * extent).toBeLessThanOrEqual(1.92 + 1e-8)
-            expect(extent).toBeGreaterThan(1)
+            for (const physicalRadius of [
+                1e-12,
+                0.25,
+                0.4,
+                1,
+                5,
+                16,
+                30,
+                Number.MAX_VALUE,
+            ]) {
+                const { radius, extent } = getStellarProfile({
+                    type,
+                    color: 0.5,
+                    radius: physicalRadius,
+                })
+                expect(radius * extent).toBeLessThanOrEqual(1.92 + 1e-8)
+                expect(extent).toBeGreaterThan(1)
+            }
         }
     })
 
     it("distinguishes coarse red-giant convection from hotter, finer blue-giant convection", () => {
-        const red = getStellarProfile({ type: StarType.GiantStar, color: 0 })
-        const blue = getStellarProfile({ type: StarType.GiantStar, color: 1 })
+        const red = getStellarProfile({
+            type: StarType.GiantStar,
+            color: 0,
+            radius: 16,
+        })
+        const blue = getStellarProfile({
+            type: StarType.GiantStar,
+            color: 1,
+            radius: 16,
+        })
         const solar = getStellarProfile({
             type: StarType.MainSeqStar,
             color: 0.5,
+            radius: 1,
         })
         expect(red.granulation).toBeLessThan(blue.granulation)
         expect(red.granulation).toBeLessThan(solar.granulation / 2)
@@ -50,10 +137,12 @@ describe("stellar impostor profiles", () => {
         const dwarf = getStellarProfile({
             type: StarType.WhiteDwarf,
             color: 0.5,
+            radius: 0.25,
         })
         const main = getStellarProfile({
             type: StarType.MainSeqStar,
             color: 0.5,
+            radius: 1,
         })
         expect(dwarf.radius).toBeLessThan(main.radius)
         expect(dwarf.whiteness).toBeGreaterThan(main.whiteness)
@@ -64,12 +153,26 @@ describe("stellar impostor profiles", () => {
         "bounds visual inputs for invalid spectral color %s",
         (color) => {
             for (const type of types) {
-                const profile = getStellarProfile({ type, color })
+                const profile = getStellarProfile({ type, color, radius: 1 })
                 expect(Object.values(profile).every(Number.isFinite)).toBe(true)
                 expect(profile.whiteness).toBeGreaterThanOrEqual(0)
                 expect(profile.whiteness).toBeLessThanOrEqual(1)
                 expect(profile.activity).toBeGreaterThanOrEqual(0)
                 expect(profile.activity).toBeLessThanOrEqual(1)
+            }
+        },
+    )
+
+    it.each([0, -1, NaN, Infinity, -Infinity, undefined])(
+        "uses a safe default for malformed physical radius %s without mutating input",
+        (radius) => {
+            for (const type of types) {
+                const star = Object.freeze({ type, color: 0.5, radius }) as Star
+                const profile = getStellarProfile(star)
+                expect(Object.values(profile).every(Number.isFinite)).toBe(true)
+                expect(profile.radius).toBe(0.4)
+                expect(star.radius).toBe(radius)
+                expect(getStellarProfile(star)).toEqual(profile)
             }
         },
     )

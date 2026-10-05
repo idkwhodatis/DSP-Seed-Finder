@@ -1,6 +1,5 @@
 import GameIcon from "../components/GameIcon"
 import StarTypeIcon from "../components/StarTypeIcon"
-import { useObjectState } from "../hooks/useLiveState"
 import { GasType, OceanType, PlanetType, StarType, VeinType } from "../enums"
 import {
     distanceFromBirth,
@@ -15,10 +14,9 @@ import {
     veinOrder,
 } from "../util"
 import styles from "~styles"
-import { type FC, Fragment } from "react"
-import { ChevronDown as IoChevronDown } from "lucide-react"
+import { type FC, Fragment, useCallback, useEffect, useRef } from "react"
 import clsx from "clsx"
-import { Link } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import Tooltip from "../components/Tooltip"
 import { Trans, useLingui } from "#lingui"
 import {
@@ -142,33 +140,12 @@ function nearbyStars(
     result.sort((a, b) => a.distance - b.distance)
     return result
 }
-const Expand: FC<{
-    expand: boolean
-    toggle: () => void
-}> = (props) => {
-    const { t } = useLingui()
-    return (
-        <button
-            type="button"
-            aria-expanded={props.expand}
-            aria-label={
-                props.expand ? t`Collapse star details` : t`Expand star details`
-            }
-            className={clsx(styles.expand, props.expand && styles.expanded)}
-            style={{ background: "transparent", border: 0, padding: 0 }}
-            onClick={props.toggle}
-        >
-            <IoChevronDown />
-        </button>
-    )
-}
 const XStarText: FC = () => {
     const { t } = useLingui()
     return <Tooltip text={t`Black Hole / Neutron Star`}>{t`X star`}</Tooltip>
 }
 const StarDetail: FC<{
     star: Star
-    expand: boolean
     positions?: Position[]
 }> = (props) => {
     const { t } = useLingui()
@@ -256,38 +233,33 @@ const StarDetail: FC<{
                 <div className={styles.field}>{t`Maximum number of hives`}</div>
                 <div className={styles.value}>{props.star.maxHiveCount}</div>
             </div>
-            {props.expand ? (
-                <>
-                    <div className={styles.row}>
-                        <div className={styles.field}>{t`Radius`}</div>
-                        <div className={styles.value}>
-                            {toPrecision(props.star.radius * 1600, 0)} m
-                        </div>
+            <>
+                <div className={styles.row}>
+                    <div className={styles.field}>{t`Radius`}</div>
+                    <div className={styles.value}>
+                        {toPrecision(props.star.radius * 1600, 0)} m
                     </div>
-                    <div className={styles.row}>
-                        <div className={styles.field}>{t`Mass`}</div>
-                        <div className={styles.value}>
-                            {formatNumber(props.star.mass, 3)} M
-                        </div>
+                </div>
+                <div className={styles.row}>
+                    <div className={styles.field}>{t`Mass`}</div>
+                    <div className={styles.value}>
+                        {formatNumber(props.star.mass, 3)} M
                     </div>
-                    <div className={styles.row}>
-                        <div className={styles.field}>{t`Temperature`}</div>
-                        <div className={styles.value}>
-                            {toPrecision(props.star.temperature, 0)} K
-                        </div>
+                </div>
+                <div className={styles.row}>
+                    <div className={styles.field}>{t`Temperature`}</div>
+                    <div className={styles.value}>
+                        {toPrecision(props.star.temperature, 0)} K
                     </div>
-                    <div className={styles.row}>
-                        <div className={styles.field}>{t`Age`}</div>
-                        <div className={styles.value}>
-                            {toPrecision(
-                                props.star.age * props.star.lifetime,
-                                0,
-                            )}{" "}
-                            Myrs
-                        </div>
+                </div>
+                <div className={styles.row}>
+                    <div className={styles.field}>{t`Age`}</div>
+                    <div className={styles.value}>
+                        {toPrecision(props.star.age * props.star.lifetime, 0)}{" "}
+                        Myrs
                     </div>
-                </>
-            ) : null}
+                </div>
+            </>
         </>
     )
 }
@@ -597,10 +569,18 @@ const StarView: FC<{
     newPage?: boolean
     displayNames?: ReadonlyMap<number, string>
 }> = (props) => {
-    const [expand, setExpand] = useObjectState({
-        detail: false,
-        planets: {} as Record<number, boolean>,
-    })
+    const planetList = useRef<HTMLDivElement>(null)
+    const location = useLocation()
+    const navigate = useNavigate()
+    const scrollToPlanet = useCallback((id: string) => {
+        const planet = Array.from(planetList.current?.children ?? []).find(
+            (element) => element.id === id,
+        )
+        planet?.scrollIntoView({ block: "start", inline: "nearest" })
+    }, [])
+    useEffect(() => {
+        scrollToPlanet(location.hash.slice(1))
+    }, [location.hash, props.star.index, scrollToPlanet])
     const xStarPostions = () =>
         props.galaxy?.stars
             .filter(
@@ -612,13 +592,16 @@ const StarView: FC<{
     const { t } = useLingui()
     return (
         <div className={styles.view}>
-            <div className={styles.main}>
+            <section
+                className={styles.main}
+                tabIndex={0}
+                aria-labelledby={`star-${props.star.index}-title`}
+            >
                 <section className={styles.card}>
-                    <Expand
-                        expand={expand.detail}
-                        toggle={() => setExpand("detail", (x) => !x)}
-                    />
-                    <h1 className={clsx(styles.title, styles.starTitle)}>
+                    <h1
+                        className={styles.title}
+                        id={`star-${props.star.index}-title`}
+                    >
                         <StarTypeIcon star={props.star} size={24} />
                         <span>
                             {props.displayNames?.get(props.star.index) ??
@@ -640,31 +623,80 @@ const StarView: FC<{
                                 key={planet.index}
                                 className={styles.planetLink}
                                 href={`#star-${props.star.index}-planet-${planet.index}`}
+                                onClick={(event) => {
+                                    if (
+                                        event.button !== 0 ||
+                                        event.metaKey ||
+                                        event.ctrlKey ||
+                                        event.shiftKey ||
+                                        event.altKey
+                                    )
+                                        return
+                                    event.preventDefault()
+                                    const id = `star-${props.star.index}-planet-${planet.index}`
+                                    navigate({
+                                        pathname: location.pathname,
+                                        search: location.search,
+                                        hash: `#${id}`,
+                                    })
+                                    // Also scroll when the same jump link is activated again.
+                                    scrollToPlanet(id)
+                                }}
                             >
                                 {romans[planet.index]}
                             </a>
                         ))}
                     </nav>
-                    <StarDetail
-                        star={props.star}
-                        expand={expand.detail}
-                        positions={xStarPostions()}
-                    />
+                    <StarDetail star={props.star} positions={xStarPostions()} />
                 </section>
                 <section className={styles.card}>
                     <h2 className={styles.title}>{t`Resources`}</h2>
                     <StarVeins star={props.star} />
                 </section>
-            </div>
-            <section className={styles.planets} aria-label={t`Planets`}>
-                <h2 className={styles.title}>
+                {props.galaxy && (
+                    <details className={clsx(styles.card, styles.nearby)}>
+                        <summary className={styles.title}>
+                            {t`Nearby Stars`}{" "}
+                            <span className={styles.count}>
+                                {props.galaxy.stars.length - 1}
+                            </span>
+                        </summary>
+                        <div className={styles.nearbyList}>
+                            {nearbyStars(props.star, props.galaxy.stars).map(
+                                ({ star, distance }) => (
+                                    <NearbyStar
+                                        key={star.index}
+                                        seed={props.galaxy!.seed}
+                                        star={star}
+                                        distance={distance}
+                                        url={props.buildUrl(star.index)}
+                                        newPage={props.newPage}
+                                        displayNames={props.displayNames}
+                                    />
+                                ),
+                            )}
+                        </div>
+                    </details>
+                )}
+            </section>
+            <section className={styles.planets}>
+                <h2
+                    className={styles.title}
+                    id={`star-${props.star.index}-planets`}
+                >
                     {t`Planets`}{" "}
                     <span className={styles.count}>
                         {props.star.planets.length}
                     </span>
                 </h2>
 
-                <div className={styles.planetGrid}>
+                <div
+                    className={styles.planetGrid}
+                    ref={planetList}
+                    tabIndex={0}
+                    role="region"
+                    aria-labelledby={`star-${props.star.index}-planets`}
+                >
                     {props.star.planets.map((planet) => (
                         <PlanetView
                             key={planet.index}
@@ -675,31 +707,6 @@ const StarView: FC<{
                     ))}
                 </div>
             </section>
-            {props.galaxy && (
-                <details className={clsx(styles.card, styles.nearby)}>
-                    <summary className={styles.title}>
-                        {t`Nearby Stars`}{" "}
-                        <span className={styles.count}>
-                            {props.galaxy.stars.length - 1}
-                        </span>
-                    </summary>
-                    <div className={styles.nearbyList}>
-                        {nearbyStars(props.star, props.galaxy.stars).map(
-                            ({ star, distance }) => (
-                                <NearbyStar
-                                    key={star.index}
-                                    seed={props.galaxy!.seed}
-                                    star={star}
-                                    distance={distance}
-                                    url={props.buildUrl(star.index)}
-                                    newPage={props.newPage}
-                                    displayNames={props.displayNames}
-                                />
-                            ),
-                        )}
-                    </div>
-                </details>
-            )}
         </div>
     )
 }

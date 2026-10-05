@@ -42,8 +42,20 @@ vi.mock("three", async (importOriginal) => {
 })
 
 const stars = [
-    { index: 0, position: [-8, 2, -3], type: StarType.MainSeqStar, color: 0.5 },
-    { index: 1, position: [13, -1, 11], type: StarType.GiantStar, color: 0.1 },
+    {
+        index: 0,
+        position: [-8, 2, -3],
+        type: StarType.MainSeqStar,
+        color: 0.5,
+        radius: 1,
+    },
+    {
+        index: 1,
+        position: [13, -1, 11],
+        type: StarType.GiantStar,
+        color: 0.1,
+        radius: 16,
+    },
 ] as Star[]
 const galaxy: Galaxy = { seed: 12345, stars }
 class Media extends EventTarget {
@@ -224,6 +236,9 @@ describe("Three galaxy resources and scheduling", () => {
                         index,
                         type: types[index % types.length]!,
                         color: index / 63,
+                        radius:
+                            [0.55, 16, 0.25, 0.4, 4][index % types.length]! *
+                            (1 + index / 200),
                         position: [index % 8, index, Math.floor(index / 8)],
                     }) as Star,
             ),

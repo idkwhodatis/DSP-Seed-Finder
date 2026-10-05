@@ -1,19 +1,30 @@
-/* One scrolling parent owns the complete star view. No clipped, nested columns. */
+/* Desktop overview and planet list scroll independently inside the available pane. */
 .view {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
     min-width: 0;
     padding: 12px;
     display: grid;
     grid-template-columns: minmax(280px, 0.9fr) minmax(320px, 1.1fr);
-    align-items: start;
+    grid-template-rows: minmax(0, 1fr);
+    align-items: stretch;
     gap: 12px;
-}
-.main,
-.column {
-    min-width: 0;
 }
 .main {
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
     display: grid;
+    align-content: start;
     gap: 12px;
+    padding: 2px;
+}
+.main:focus-visible,
+.planetGrid:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: -2px;
 }
 .card {
     position: relative;
@@ -33,29 +44,11 @@
     font-weight: 600;
     line-height: 26px;
 }
-.starTitle {
-    padding-right: 24px;
-}
 .index,
 .count {
     color: var(--muted-foreground);
     font-size: 14px;
     font-weight: 400;
-}
-.expand {
-    position: absolute;
-    width: 32px;
-    height: 32px;
-    top: 8px;
-    right: 6px;
-    display: grid;
-    place-items: center;
-    cursor: pointer;
-    transform: rotate(-90deg);
-    transition: transform 0.2s;
-}
-.expanded {
-    transform: rotate(0);
 }
 .row {
     display: flex;
@@ -82,7 +75,7 @@
     grid-column: 1 / -1;
 }
 .nearby summary {
-    cursor: pointer;
+    cursor: default;
     margin: 0;
 }
 .nearby[open] summary {
@@ -119,6 +112,13 @@
 }
 .planets {
     min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.planets > .title {
+    flex: none;
 }
 .planetNav {
     display: flex;
@@ -141,6 +141,12 @@
     border-color: var(--ring);
 }
 .planetGrid {
+    min-height: 0;
+    flex: 1 1 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 2px;
+    align-content: start;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 12px;
@@ -179,11 +185,20 @@
 }
 @media (max-width: 1080px) {
     .view {
+        height: auto;
+        min-height: 100%;
+        overflow: visible;
         grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto auto;
     }
     .main {
+        overflow: visible;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         align-items: start;
+    }
+    .planets {
+        height: min(70dvh, 720px);
+        min-height: 280px;
     }
 }
 @media (max-width: 760px) {

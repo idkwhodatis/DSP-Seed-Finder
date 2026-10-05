@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event"
 import { setupI18n } from "@lingui/core"
 import { I18nProvider } from "@lingui/react"
 import type { ReactNode } from "react"
+import { MemoryRouter } from "react-router-dom"
 import { readFileSync } from "node:fs"
 import {
     ConditionType,
@@ -29,7 +30,7 @@ afterEach(cleanup)
 function localized(children: ReactNode) {
     return (
         <I18nProvider i18n={setupI18n({ locale: "en", messages: { en: {} } })}>
-            {children}
+            <MemoryRouter>{children}</MemoryRouter>
         </I18nProvider>
     )
 }
@@ -447,25 +448,18 @@ describe("read-only rules and keyboard controls", () => {
         expect(onChange).toHaveBeenLastCalledWith([[rule]])
     })
 
-    it("expands and collapses star details using Enter and Space", async () => {
-        const user = userEvent.setup()
+    it("always exposes full star details without a disclosure control", () => {
         render(
             localized(
                 <StarView star={star} buildUrl={(index) => `/star/${index}`} />,
             ),
         )
-        const expand = screen.getByRole("button", {
-            name: "Expand star details",
-        })
-        expect(expand).toHaveAttribute("aria-expanded", "false")
-        expect(screen.queryByText("Mass")).toBeNull()
-        expand.focus()
-        await user.keyboard("{Enter}")
+        expect(screen.getByText("Mass")).toBeVisible()
+        expect(screen.getByText("Temperature")).toBeVisible()
         expect(
-            screen.getByRole("button", { name: "Collapse star details" }),
-        ).toHaveAttribute("aria-expanded", "true")
-        expect(screen.getByText("Mass")).toBeTruthy()
-        await user.keyboard(" ")
-        expect(screen.queryByText("Mass")).toBeNull()
+            screen.queryByRole("button", {
+                name: /(?:Expand|Collapse) star details/,
+            }),
+        ).not.toBeInTheDocument()
     })
 })

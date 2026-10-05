@@ -5,9 +5,9 @@ import {
     screen,
     within,
 } from "@testing-library/react"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { readFileSync } from "node:fs"
-import { MemoryRouter } from "react-router-dom"
+import { MemoryRouter, useLocation } from "react-router-dom"
 import { I18nProvider } from "@lingui/react"
 import { setupI18n } from "@lingui/core"
 import StarView from "./StarView"
@@ -67,10 +67,25 @@ const other: Star = {
     name: "Other Star",
     position: [3, 0, 4],
 }
-function content(selected = star, displayNames?: ReadonlyMap<number, string>) {
+function CurrentLocation() {
+    const location = useLocation()
+    return (
+        <output data-testid="location">
+            {location.pathname}
+            {location.search}
+            {location.hash}
+        </output>
+    )
+}
+function content(
+    selected = star,
+    displayNames?: ReadonlyMap<number, string>,
+    initialEntry = "/",
+) {
     return (
         <I18nProvider i18n={setupI18n({ locale: "en", messages: { en: {} } })}>
-            <MemoryRouter>
+            <MemoryRouter initialEntries={[initialEntry]}>
+                <CurrentLocation />
                 <StarView
                     star={selected}
                     displayNames={displayNames}
@@ -97,7 +112,7 @@ describe("complete planet details", () => {
         )
         expect(columnDeclarations).toEqual(["minmax(0, 1fr)"])
     })
-    it("renders every planet with a direct jump link and keeps details before nearby stars", () => {
+    it("renders every planet with a direct jump link and optional nearby stars", () => {
         render(content())
         const planets = screen.getAllByRole("article")
         expect(planets).toHaveLength(6)
@@ -145,21 +160,67 @@ describe("complete planet details", () => {
         )
         expect(star.name).toBe("Test Star")
     })
-    it("supports repeated expansion and navigation without dropping planets", () => {
+    it("always shows full star details and keeps all planets after navigation", () => {
         const { rerender } = render(content())
-        fireEvent.click(
-            screen.getByRole("button", { name: "Expand star details" }),
-        )
-        expect(screen.getByText("Temperature")).toBeVisible()
-        fireEvent.click(
-            screen.getByRole("button", { name: "Collapse star details" }),
-        )
-        expect(screen.queryByText("Temperature")).not.toBeInTheDocument()
+        for (const label of ["Radius", "Mass", "Temperature", "Age"]) {
+            expect(screen.getByText(label)).toBeVisible()
+        }
+        expect(
+            screen.queryByRole("button", {
+                name: /(?:Expand|Collapse) star details/,
+            }),
+        ).not.toBeInTheDocument()
         rerender(content(other))
         expect(screen.getAllByRole("article")).toHaveLength(6)
+        expect(screen.getByText("Temperature")).toBeVisible()
         expect(screen.getByRole("link", { name: "VI" })).toHaveAttribute(
             "href",
             "#star-1-planet-5",
+        )
+    })
+    it("exposes separate keyboard-focusable overview and planet scroll regions", () => {
+        render(content())
+        const overview = screen.getByRole("region", { name: "Test Star #1" })
+        const planets = screen.getByRole("region", { name: "Planets 6" })
+        expect(overview).toHaveAttribute("tabindex", "0")
+        expect(planets).toHaveAttribute("tabindex", "0")
+        expect(overview).not.toContainElement(planets)
+        expect(within(planets).getAllByRole("article")).toHaveLength(6)
+        const css = readFileSync("web/src/partials/StarView.module.css", "utf8")
+        for (const selector of ["main", "planetGrid"]) {
+            const rule = css.match(
+                new RegExp(`\\.${selector} \\{([^}]+)\\}`),
+            )![1]!
+            expect(rule).toContain("overflow-y: auto")
+            expect(rule).toContain("min-height: 0")
+        }
+    })
+    it("jumps repeatedly within the planet list while preserving route parameters", () => {
+        render(content(star, undefined, "/galaxy/0/0?count=32&resource=2"))
+        const last = screen.getAllByRole("article")[5]!
+        const scroll = vi.spyOn(last, "scrollIntoView")
+        fireEvent.click(screen.getByRole("link", { name: "VI" }))
+        expect(scroll).toHaveBeenCalledWith({
+            block: "start",
+            inline: "nearest",
+        })
+        scroll.mockClear()
+        fireEvent.click(screen.getByRole("link", { name: "VI" }))
+        expect(scroll).toHaveBeenCalledWith({
+            block: "start",
+            inline: "nearest",
+        })
+        expect(screen.getByTestId("location")).toHaveTextContent(
+            "/galaxy/0/0?count=32&resource=2#star-0-planet-5",
+        )
+        scroll.mockRestore()
+    })
+    it("honors a direct planet hash when the system opens", () => {
+        const scroll = vi.mocked(HTMLElement.prototype.scrollIntoView)
+        scroll.mockClear()
+        render(content(star, undefined, "/#star-0-planet-5"))
+        expect(scroll.mock.contexts).toContain(
+            screen.getAllByRole("article")[5],
         )
     })
 })

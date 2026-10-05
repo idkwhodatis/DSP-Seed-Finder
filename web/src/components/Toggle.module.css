@@ -1,6 +1,6 @@
 .toggle {
     position: relative;
-    cursor: pointer;
+    cursor: default;
     width: 44px;
     height: 22px;
     border-radius: 9999px;

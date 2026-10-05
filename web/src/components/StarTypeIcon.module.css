@@ -9,6 +9,12 @@
     margin-inline-end: 4px;
     vertical-align: -3px;
     pointer-events: none;
+    /* Outline the transparent silhouette without tinting the spectral colors. */
+    filter: drop-shadow(0 0 0.75px rgb(15 23 42 / 75%));
+}
+
+:global(.dark) .icon {
+    filter: none;
 }
 
 .art {

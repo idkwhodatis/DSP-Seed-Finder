@@ -45,7 +45,7 @@
     color: var(--error);
     flex: none;
     padding: 0 8px;
-    cursor: pointer;
+    cursor: default;
 }
 
 .input {

@@ -31,7 +31,7 @@
 .star:hover,
 .star:focus,
 .star:focus-visible {
-    cursor: pointer;
+    cursor: default;
     /* HTML outlines scale in SVG user units. The local SVG marker is the focus indicator. */
     outline: none;
     outline-offset: 0;
