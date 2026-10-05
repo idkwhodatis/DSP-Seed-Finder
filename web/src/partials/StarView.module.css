@@ -111,6 +111,9 @@
     font-variant-numeric: tabular-nums;
 }
 .planets {
+    width: fit-content;
+    max-width: 100%;
+    justify-self: start;
     min-width: 0;
     min-height: 0;
     display: flex;
@@ -147,20 +150,24 @@
     overscroll-behavior: contain;
     padding: 2px;
     align-content: start;
+    justify-items: start;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 12px;
 }
 .planet {
+    width: max-content;
+    max-width: 100%;
     min-width: 0;
     scroll-margin-top: 12px;
     display: grid;
-    grid-template-columns: fit-content(45%) minmax(0, 1fr);
-    column-gap: 12px;
+    grid-template-columns: minmax(0, max-content) minmax(0, max-content);
+    column-gap: 24px;
 }
 /* Share the natural label width across this card, without spreading values
    across the whole planet pane. Long translations can wrap on narrow screens. */
 .planet > .row {
+    padding: 5px 0;
     grid-column: 1 / -1;
     display: grid;
     grid-template-columns: subgrid;
@@ -180,6 +187,8 @@
     outline-offset: 2px;
 }
 .planetName {
+    min-width: 0;
+    overflow-wrap: anywhere;
     grid-column: 1 / -1;
     display: flex;
     align-items: center;

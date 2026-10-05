@@ -160,7 +160,7 @@ describe("complete planet details", () => {
         )
         expect(star.name).toBe("Test Star")
     })
-    it("keeps planet label/value pairs adjacent in a compact shared grid", () => {
+    it("keeps planet label/value pairs aligned with breathing room in content-sized cards", () => {
         render(content())
         const planets = screen.getAllByRole("article")
         for (const [planet, label, value] of [
@@ -179,7 +179,7 @@ describe("complete planet details", () => {
         ).toHaveLength(0)
         const css = readFileSync("web/src/partials/StarView.module.css", "utf8")
         expect(css).toMatch(
-            /\.planet \{[^}]*grid-template-columns: fit-content\(45%\) minmax\(0, 1fr\)/,
+            /\.planet \{[^}]*grid-template-columns: minmax\(0, max-content\) minmax\(0, max-content\)/,
         )
         expect(css).toMatch(
             /\.planet > \.row \{[^}]*grid-template-columns: subgrid/,
@@ -187,6 +187,15 @@ describe("complete planet details", () => {
         expect(css).toMatch(
             /\.planet > \.row > \.value \{[^}]*text-align: left;[^}]*overflow-wrap: anywhere/,
         )
+        expect(css).toMatch(
+            /\.planet \{[^}]*width: max-content;[^}]*max-width: 100%;[^}]*column-gap: 24px/,
+        )
+        expect(css).toMatch(
+            /\.planets \{[^}]*width: fit-content;[^}]*max-width: 100%/,
+        )
+        expect(css).toMatch(/\.planetGrid \{[^}]*justify-items: start/)
+        expect(css).toMatch(/\.planet > \.row \{[^}]*padding: 5px 0/)
+        expect(css).toMatch(/\.planetName \{[^}]*overflow-wrap: anywhere/)
         expect(css).toMatch(/\.planetName \{[^}]*grid-column: 1 \/ -1/)
     })
     it("always shows full star details and keeps all planets after navigation", () => {
