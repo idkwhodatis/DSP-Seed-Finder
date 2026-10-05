@@ -27,13 +27,14 @@
 .connector {
     opacity: 0.65;
 }
-.star {
+.star,
+.star:hover,
+.star:focus,
+.star:focus-visible {
     cursor: pointer;
-    filter: drop-shadow(0 0 0.12px currentColor);
-}
-.star:hover {
-    stroke: white;
-    stroke-width: 0.1px;
+    /* HTML outlines scale in SVG user units. The local SVG marker is the focus indicator. */
+    outline: none;
+    outline-offset: 0;
 }
 .popup {
     z-index: 50;

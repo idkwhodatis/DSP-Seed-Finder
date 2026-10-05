@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
     BufferGeometry,
+    InstancedBufferGeometry,
+    NormalBlending,
     ShaderMaterial,
     type Scene,
     type OrthographicCamera,
-    type Points,
+    type Mesh,
 } from "three"
 import { StarType } from "../enums"
 import {
@@ -12,6 +14,7 @@ import {
     type GalaxyAnimationController,
 } from "./GalaxyAnimation.runtime"
 import { getGalaxyBounds } from "./GalaxyAnimation.math"
+import { getStellarProfile } from "./GalaxyAnimation.stellar"
 
 const mocked = vi.hoisted(() => ({
     constructor: vi.fn(),
@@ -43,7 +46,6 @@ const stars = [
     { index: 1, position: [13, -1, 11], type: StarType.GiantStar, color: 0.1 },
 ] as Star[]
 const galaxy: Galaxy = { seed: 12345, stars }
-const bounds = getGalaxyBounds(stars)
 class Media extends EventTarget {
     matches = false
 }
@@ -64,12 +66,12 @@ function runFrame(now: number) {
     frames.clear()
     pending.forEach((callback) => callback(now))
 }
-function start() {
+function start(input = galaxy) {
     const onStatus = vi.fn()
     const controller = createGalaxyAnimation(
         canvas,
-        galaxy,
-        bounds,
+        input,
+        getGalaxyBounds(input.stars),
         true,
         onStatus,
     )
@@ -183,12 +185,108 @@ describe("Three galaxy resources and scheduling", () => {
         ]
         const actualStars = scene.children.find(
             (child) => child.renderOrder === 2,
-        ) as Points<BufferGeometry, ShaderMaterial>
-        expect([
-            ...actualStars.geometry.getAttribute("position").array,
-        ]).toEqual([-8, -3, 0, 13, 11, 0])
+        ) as Mesh<InstancedBufferGeometry, ShaderMaterial>
+        expect([...actualStars.geometry.getAttribute("center").array]).toEqual([
+            13, 11, 0, -8, -3, 0,
+        ])
+        expect(actualStars.geometry.instanceCount).toBe(2)
+        expect(actualStars.geometry.getAttribute("position").count).toBe(4)
+        expect(actualStars.geometry.index?.count).toBe(6)
+        expect(actualStars.material.blending).toBe(NormalBlending)
+        expect(actualStars.material.depthWrite).toBe(false)
+        expect(actualStars.material.vertexShader).not.toContain("gl_PointSize")
         expect(camera.isOrthographicCamera).toBe(true)
         expect(scene.children).toHaveLength(3)
+    })
+
+    it("keeps the SVG fallback until the first visible frame actually renders", () => {
+        const { renderer, onStatus } = start()
+        expect(renderer.render).not.toHaveBeenCalled()
+        expect(onStatus).toHaveBeenLastCalledWith("loading")
+        hidden = true
+        intersections[0]!.trigger(true)
+        expect(onStatus).toHaveBeenLastCalledWith("loading")
+        hidden = false
+        document.dispatchEvent(new Event("visibilitychange"))
+        expect(renderer.render).toHaveBeenCalledTimes(1)
+        expect(canvas.style.visibility).toBe("visible")
+        expect(onStatus).toHaveBeenLastCalledWith("animated")
+    })
+
+    it("batches 64 distinct stellar profiles without mutating or moving generator data", () => {
+        const types = Object.values(StarType)
+        const input: Galaxy = {
+            seed: 8675309,
+            stars: Array.from(
+                { length: 64 },
+                (_, index) =>
+                    ({
+                        index,
+                        type: types[index % types.length]!,
+                        color: index / 63,
+                        position: [index % 8, index, Math.floor(index / 8)],
+                    }) as Star,
+            ),
+        }
+        const before = structuredClone(input)
+        const { renderer } = start(input)
+        intersections[0]!.trigger(true)
+        const [scene] = renderer.render.mock.calls[0] as [Scene]
+        const batch = scene.children.find(
+            (child) => child.renderOrder === 2,
+        ) as Mesh<InstancedBufferGeometry, ShaderMaterial>
+        const geometry = batch.geometry
+        expect(geometry.instanceCount).toBe(64)
+        for (let index = 0; index < 64; index++) {
+            const star = input.stars[index]!
+            const profile = getStellarProfile(star)
+            const center = geometry.getAttribute("center")
+            const attributes = geometry.getAttribute("profile")
+            const detail = geometry.getAttribute("detail")
+            expect([center.getX(index), center.getY(index)]).toEqual([
+                star.position[0],
+                star.position[2],
+            ])
+            expect(attributes.getX(index)).toBeCloseTo(profile.radius)
+            expect(attributes.getY(index)).toBeCloseTo(profile.extent)
+            expect(attributes.getZ(index)).toBe(profile.kind)
+            expect(detail.getX(index)).toBeCloseTo(profile.granulation)
+            expect(detail.getY(index)).toBeCloseTo(profile.activity)
+            expect(detail.getZ(index)).toBeCloseTo(profile.whiteness)
+        }
+        expect(input).toEqual(before)
+        expect(scene.children).toHaveLength(3)
+    })
+
+    it("reproduces surface phases and skips invalid coordinates in all instance buffers", () => {
+        const input = {
+            ...galaxy,
+            stars: [...stars, { ...stars[0]!, position: [NaN, 0, 5] } as Star],
+        }
+        const first = start(input)
+        intersections[0]!.trigger(true)
+        const second = start(input)
+        intersections[1]!.trigger(true)
+        const getGeometry = (renderer: typeof first.renderer) => {
+            const [scene] = renderer.render.mock.calls[0] as [Scene]
+            return (
+                scene.children.find(
+                    (child) => child.renderOrder === 2,
+                ) as Mesh<InstancedBufferGeometry>
+            ).geometry
+        }
+        const a = getGeometry(first.renderer)
+        const b = getGeometry(second.renderer)
+        expect(a.instanceCount).toBe(2)
+        for (const name of ["center", "tint", "profile", "detail"]) {
+            expect(a.getAttribute(name).count).toBe(2)
+            expect([...a.getAttribute(name).array]).toEqual([
+                ...b.getAttribute(name).array,
+            ])
+            expect([...a.getAttribute(name).array].every(Number.isFinite)).toBe(
+                true,
+            )
+        }
     })
 
     it("caps rendered frames at 30fps and stops on a manual pause without freeing the scene", () => {

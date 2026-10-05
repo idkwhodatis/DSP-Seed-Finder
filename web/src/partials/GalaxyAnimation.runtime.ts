@@ -3,7 +3,10 @@ import {
     BufferGeometry,
     Color,
     Float32BufferAttribute,
+    InstancedBufferAttribute,
+    InstancedBufferGeometry,
     Mesh,
+    NormalBlending,
     OrthographicCamera,
     PlaneGeometry,
     Points,
@@ -11,8 +14,8 @@ import {
     ShaderMaterial,
     SRGBColorSpace,
     WebGLRenderer,
+    type Blending,
 } from "three"
-import { StarType } from "../enums"
 import {
     fitGalaxyCamera,
     galaxyVisualRandom,
@@ -20,6 +23,8 @@ import {
     type GalaxyBounds,
 } from "./GalaxyAnimation.math"
 import type { GalaxyAnimationStatus } from "./GalaxyAnimation"
+import { getStellarProfile } from "./GalaxyAnimation.stellar"
+import { stellarVertex, stellarFragment } from "./GalaxyAnimation.shaders"
 
 export interface GalaxyAnimationController {
     setEnabled: (enabled: boolean) => void
@@ -27,37 +32,6 @@ export interface GalaxyAnimationController {
 }
 
 const FRAME_INTERVAL = 1000 / 30
-const starVertex = `
-    attribute vec3 tint;
-    attribute float diameter;
-    attribute float phase;
-    uniform float time;
-    uniform float pixelScale;
-    uniform float pixelRatio;
-    varying vec3 vTint;
-    varying float vPulse;
-    void main() {
-        vTint = tint;
-        vPulse = 0.91 + 0.09 * sin(time * 0.72 + phase);
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        gl_PointSize = clamp(diameter * pixelScale * (0.98 + 0.02 * vPulse), 10.0 * pixelRatio, 120.0 * pixelRatio);
-    }
-`
-const starFragment = `
-    varying vec3 vTint;
-    varying float vPulse;
-    void main() {
-        vec2 p = gl_PointCoord * 2.0 - 1.0;
-        float radius = length(p);
-        if (radius > 1.0) discard;
-        float halo = exp(-5.2 * radius) * (1.0 - smoothstep(0.65, 1.0, radius));
-        float core = exp(-36.0 * radius * radius);
-        float rays = pow(max(0.0, 1.0 - abs(p.x * p.y) * 95.0), 3.0)
-            * exp(-5.0 * radius) * 0.12;
-        gl_FragColor = vec4(mix(vTint, vec3(1.0), core * 0.4), (halo * 0.66 + core * 0.35 + rays) * vPulse);
-        #include <colorspace_fragment>
-    }
-`
 const dustVertex = `
     attribute float phase;
     attribute float diameter;
@@ -93,7 +67,7 @@ const nebulaFragment = `
         float folds = sin(p.x * 15.0 + sin(p.y * 11.0 + time * 0.018) * 2.0);
         float veil = 0.62 + 0.18 * folds + 0.12 * sin(p.y * 21.0 - p.x * 8.0);
         vec3 tint = mix(vec3(0.21, 0.15, 0.46), vec3(0.08, 0.36, 0.53), smoothstep(-0.5, 0.5, p.x));
-        gl_FragColor = vec4(tint, cloud * veil * 0.19);
+        gl_FragColor = vec4(tint, cloud * veil * 0.10);
     }
 `
 
@@ -115,6 +89,7 @@ export function createGalaxyAnimation(
     let frame: number | undefined
     let lastFrame = 0
     let elapsed = 0
+    let hasRendered = false
     let hasSize = false
     let inView = true
     let status: GalaxyAnimationStatus | undefined
@@ -170,17 +145,21 @@ export function createGalaxyAnimation(
         renderer.setClearColor(0x000000, 0)
         // Shader compile failure does not always throw, so explicitly retain the SVG fallback.
         renderer.debug.onShaderError = fail
-        const geometry = (value: BufferGeometry) => {
+        const geometry = <T extends BufferGeometry>(value: T): T => {
             geometries.push(value)
             return value
         }
-        const material = (vertexShader: string, fragmentShader: string) => {
+        const material = (
+            vertexShader: string,
+            fragmentShader: string,
+            blending: Blending = AdditiveBlending,
+        ) => {
             const value = new ShaderMaterial({
                 uniforms,
                 vertexShader,
                 fragmentShader,
                 transparent: true,
-                blending: AdditiveBlending,
+                blending,
                 depthTest: false,
                 depthWrite: false,
                 toneMapped: false,
@@ -188,45 +167,68 @@ export function createGalaxyAnimation(
             materials.push(value)
             return value
         }
-        const starGeometry = geometry(new BufferGeometry())
-        const positions: number[] = [],
+        // Four shared billboard vertices plus one compact per-star attribute record.
+        // Instanced quads preserve exact SVG radii without implementation-specific
+        // gl_PointSize limits, even for a one-star map or a very wide viewport.
+        const starGeometry = geometry(new InstancedBufferGeometry())
+        starGeometry.setAttribute(
+            "position",
+            new Float32BufferAttribute(
+                [-1, -1, 0, 1, -1, 0, 1, 1, 0, -1, 1, 0],
+                3,
+            ),
+        )
+        starGeometry.setIndex([0, 1, 2, 0, 2, 3])
+        const centers: number[] = [],
             tints: number[] = [],
-            diameters: number[] = [],
-            phases: number[] = []
+            profiles: number[] = [],
+            details: number[] = []
         const color = new Color()
         const random = galaxyVisualRandom(galaxy.seed)
-        for (const star of galaxy.stars) {
+        // Match SVG's height ordering without mutating the generator's star array.
+        for (const star of galaxy.stars.toSorted(
+            (a, b) => a.position[1] - b.position[1],
+        )) {
             const [x, , z] = star.position
             if (!Number.isFinite(x) || !Number.isFinite(z)) continue
-            positions.push(x, z, 0)
+            centers.push(x, z, 0)
             const [r, g, b] = getGalaxyStarColor(star)
             color.setRGB(r / 255, g / 255, b / 255, SRGBColorSpace)
             tints.push(color.r, color.g, color.b)
-            diameters.push(
-                star.type === StarType.GiantStar
-                    ? 6.4
-                    : star.type === StarType.WhiteDwarf
-                      ? 2.7
-                      : 4.2,
+            const profile = getStellarProfile(star)
+            profiles.push(
+                profile.radius,
+                profile.extent,
+                profile.kind,
+                random() * Math.PI * 2,
             )
-            phases.push(random() * Math.PI * 2)
+            details.push(
+                profile.granulation,
+                profile.activity,
+                profile.whiteness,
+                (random() - 0.5) * 1.4,
+            )
         }
         starGeometry.setAttribute(
-            "position",
-            new Float32BufferAttribute(positions, 3),
-        )
-        starGeometry.setAttribute("tint", new Float32BufferAttribute(tints, 3))
-        starGeometry.setAttribute(
-            "diameter",
-            new Float32BufferAttribute(diameters, 1),
+            "center",
+            new InstancedBufferAttribute(new Float32Array(centers), 3),
         )
         starGeometry.setAttribute(
-            "phase",
-            new Float32BufferAttribute(phases, 1),
+            "tint",
+            new InstancedBufferAttribute(new Float32Array(tints), 3),
         )
-        const stars = new Points(
+        starGeometry.setAttribute(
+            "profile",
+            new InstancedBufferAttribute(new Float32Array(profiles), 4),
+        )
+        starGeometry.setAttribute(
+            "detail",
+            new InstancedBufferAttribute(new Float32Array(details), 4),
+        )
+        starGeometry.instanceCount = centers.length / 3
+        const stars = new Mesh(
             starGeometry,
-            material(starVertex, starFragment),
+            material(stellarVertex, stellarFragment, NormalBlending),
         )
         stars.frustumCulled = false
         stars.renderOrder = 2
@@ -280,7 +282,10 @@ export function createGalaxyAnimation(
             if (!canRender()) return
             try {
                 renderer!.render(scene, camera)
-                if (!failed) canvas.style.visibility = "visible"
+                if (!failed) {
+                    hasRendered = true
+                    canvas.style.visibility = "visible"
+                }
             } catch {
                 fail()
             }
@@ -302,7 +307,14 @@ export function createGalaxyAnimation(
             if (disposed || failed) return
             render()
             if (disposed || failed) return
-            report(canAnimate() ? "animated" : "static")
+            // A suspended first frame is not a usable replacement for the SVG.
+            report(
+                hasRendered
+                    ? canAnimate()
+                        ? "animated"
+                        : "static"
+                    : "loading",
+            )
             if (canAnimate()) {
                 lastFrame = performance.now()
                 frame = requestAnimationFrame(tick)

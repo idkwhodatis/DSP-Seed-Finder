@@ -62,6 +62,46 @@ describe("galaxy projection", () => {
         },
     )
 
+    it.each([1, 1.25, 1.5, 2, 3])(
+        "keeps centers identical under DPR/zoom %s and repeated resizes",
+        (dpr) => {
+            const point: Position = [-17.25, 12, 8.75]
+            const bounds = getGalaxyBounds([
+                { position: point },
+                { position: [21.1, -5, -15.2] },
+            ])
+            for (const [width, height] of [
+                [1180, 757],
+                [400, 620],
+                [767.5, 345.25],
+                [1180, 757],
+            ]) {
+                const fit = fitGalaxyCamera(bounds, width!, height!)
+                const camera = new OrthographicCamera(
+                    fit.left,
+                    fit.right,
+                    fit.top,
+                    fit.bottom,
+                    0.1,
+                    100,
+                )
+                camera.position.z = 10
+                camera.updateMatrixWorld()
+                const v = new Vector3(point[0], point[2], 0).project(camera)
+                const cssX = ((1 + v.x) * width!) / 2
+                const cssY = ((1 - v.y) * height!) / 2
+                const svgX =
+                    (width! - bounds[2] * fit.pixelsPerUnit) / 2 +
+                    (point[0] - bounds[0]) * fit.pixelsPerUnit
+                const svgY =
+                    (height! - bounds[3] * fit.pixelsPerUnit) / 2 +
+                    (-point[2] - bounds[1]) * fit.pixelsPerUnit
+                expect((cssX * dpr) / dpr).toBeCloseTo(svgX, 8)
+                expect((cssY * dpr) / dpr).toBeCloseTo(svgY, 8)
+            }
+        },
+    )
+
     it("keeps zero-size measurements finite", () => {
         expect(
             Object.values(fitGalaxyCamera([-2, -2, 4, 4], 0, 0)).every(

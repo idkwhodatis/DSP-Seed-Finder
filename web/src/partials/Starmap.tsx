@@ -3,6 +3,8 @@ import {
     useId,
     useRef,
     useMemo,
+    useState,
+    useCallback,
     type FC,
     type SVGProps,
 } from "react"
@@ -14,7 +16,12 @@ import { StarType } from "../enums"
 import { useLingui } from "#lingui"
 import styles from "~styles"
 import GalaxyAnimation, { type GalaxyAnimationStatus } from "./GalaxyAnimation"
-import { getGalaxyBounds, getGalaxyStarColor } from "./GalaxyAnimation.math"
+import { getStellarDiskRadius } from "./GalaxyAnimation.stellar"
+import {
+    getGalaxyBounds,
+    getGalaxyStarColor,
+    fitGalaxyCamera,
+} from "./GalaxyAnimation.math"
 
 function sqrDistance([x1, y1, z1]: Position, [x2, y2, z2]: Position) {
     const x = x2 - x1
@@ -118,14 +125,19 @@ const StarNode: FC<{
     seed: number
     search: string
     displayName?: string
+    enhanced: boolean
+    pixelsPerUnit: number | null
 }> = (props) => {
     const navigate = useNavigate()
     const [hover, setHover] = useLiveState(false)
     const [focused, setFocused] = useLiveState(false)
+    const [dismissed, setDismissed] = useLiveState(false)
     const node = useRef<SVGCircleElement>(null)
     const popup = useRef<HTMLAnchorElement>(null)
     const popupId = useId()
-    const visible = hover() || focused()
+    const gradientId = useId()
+    const highlighted = hover() || focused()
+    const visible = highlighted && !dismissed()
     const color = `rgb(${getGalaxyStarColor(props.star).join(", ")})`
     const url = `/galaxy/${props.seed}/${props.star.index}${props.search}`
 
@@ -172,27 +184,34 @@ const StarNode: FC<{
         }
     }, [visible, props.star, url])
 
-    const size =
-        props.star.type === StarType.GiantStar
-            ? 0.8
-            : props.star.type === StarType.WhiteDwarf
-              ? 0.2
-              : 0.4
+    const size = getStellarDiskRadius(props.star)
+    const x = props.star.position[0]
+    const y = -props.star.position[2]
+    const highlightRadius =
+        size + (props.pixelsPerUnit ? 3 / props.pixelsPerUnit : 0.3)
+    const dashRadius = highlightRadius * (props.pixelsPerUnit ?? 1)
     const starStyle: SVGProps<SVGCircleElement> = {
         r: size,
-        cx: props.star.position[0],
-        cy: -props.star.position[2],
-        fill: color,
-        strokeWidth: focused() ? 0.12 : 1,
-        stroke: focused() ? "#ffffff" : "transparent",
+        cx: x,
+        cy: y,
+        fill: "transparent",
+        strokeWidth: 8,
+        stroke: "transparent",
+        vectorEffect: "non-scaling-stroke",
         role: "link",
         tabIndex: 0,
         "aria-label": `${props.displayName ?? props.star.name}, #${props.star.index + 1}`,
         "aria-describedby": visible ? popupId : undefined,
         onClick: () => navigate(url),
-        onMouseEnter: () => setHover(true),
+        onMouseEnter: () => {
+            setHover(true)
+            setDismissed(false)
+        },
         onMouseLeave: () => setHover(false),
-        onFocus: () => setFocused(true),
+        onFocus: () => {
+            setFocused(true)
+            setDismissed(false)
+        },
         onBlur: () => setFocused(false),
         onKeyDown: (event) => {
             if (event.key === "Enter" || event.key === " ") {
@@ -201,24 +220,98 @@ const StarNode: FC<{
             }
             if (event.key === "Escape") {
                 setHover(false)
-                setFocused(false)
+                setDismissed(true)
             }
         },
     }
 
     return (
         <>
-            {props.star.index === 0 && (
-                <circle
-                    r={0.7}
-                    cx={props.star.position[0]}
-                    cy={-props.star.position[2]}
-                    fill="none"
-                    stroke="#56d697"
-                    strokeWidth={0.14}
-                    aria-hidden="true"
-                />
-            )}
+            <defs>
+                <radialGradient id={gradientId} cx="40%" cy="35%" r="65%">
+                    <stop offset="0" stopColor="#fffdf3" />
+                    <stop offset="0.32" stopColor={color} />
+                    <stop offset="0.76" stopColor={color} stopOpacity="0.94" />
+                    <stop offset="1" stopColor={color} stopOpacity="0.4" />
+                </radialGradient>
+            </defs>
+            <g aria-hidden="true" pointerEvents="none">
+                {!props.enhanced && (
+                    <g data-star-fallback={props.star.index}>
+                        <circle
+                            cx={x}
+                            cy={y}
+                            r={size * 1.9}
+                            fill={color}
+                            opacity={0.07}
+                        />
+                        {props.star.type === StarType.BlackHole ? (
+                            <>
+                                <ellipse
+                                    cx={x}
+                                    cy={y}
+                                    rx={size * 1.8}
+                                    ry={size * 0.65}
+                                    transform={`rotate(-24 ${x} ${y})`}
+                                    fill="none"
+                                    stroke="#f4bf83"
+                                    strokeWidth={0.14}
+                                />
+                                <circle
+                                    cx={x}
+                                    cy={y}
+                                    r={size}
+                                    fill="#030710"
+                                    stroke="#dfb2ff"
+                                    strokeWidth={0.07}
+                                />
+                            </>
+                        ) : (
+                            <>
+                                {props.star.type === StarType.NeutronStar && (
+                                    <path
+                                        d={`M ${x - size * 0.6} ${y + size * 2.4} L ${x + size * 0.6} ${y - size * 2.4}`}
+                                        stroke="#bddfff"
+                                        strokeWidth={0.09}
+                                        opacity={0.8}
+                                    />
+                                )}
+                                <circle
+                                    cx={x}
+                                    cy={y}
+                                    r={size}
+                                    fill={`url(#${gradientId})`}
+                                />
+                            </>
+                        )}
+                    </g>
+                )}
+                {props.star.index === 0 && (
+                    <circle
+                        r={size + 0.3}
+                        cx={x}
+                        cy={y}
+                        fill="none"
+                        stroke="#56d697"
+                        strokeWidth={1.2}
+                        vectorEffect="non-scaling-stroke"
+                    />
+                )}
+                {highlighted && (
+                    <circle
+                        data-star-highlight={props.star.index}
+                        r={highlightRadius}
+                        cx={x}
+                        cy={y}
+                        fill="none"
+                        stroke="#dcf2ff"
+                        strokeWidth={1.3}
+                        strokeLinecap="round"
+                        vectorEffect="non-scaling-stroke"
+                        strokeDasharray={`${dashRadius * Math.PI * 0.34} ${dashRadius * Math.PI * 0.16}`}
+                    />
+                )}
+            </g>
             <circle ref={node} className={styles.star} {...starStyle} />
             {createPortal(
                 <Link
@@ -249,35 +342,110 @@ const Starmap: FC<{
         () => getGalaxyBounds(props.galaxy.stars),
         [props.galaxy.stars],
     )
+    const svg = useRef<SVGSVGElement>(null)
+    const connectorMaskId = useId()
+    const [pixelsPerUnit, setPixelsPerUnit] = useState<number | null>(null)
+    const [animationStatus, setAnimationStatus] =
+        useState<GalaxyAnimationStatus>("loading")
+    const reportAnimationStatus = useCallback(
+        (status: GalaxyAnimationStatus) => {
+            setAnimationStatus(status)
+            props.onAnimationStatus?.(status)
+        },
+        [props.onAnimationStatus],
+    )
+    useEffect(() => {
+        const element = svg.current
+        if (!element) return
+        const measure = () => {
+            const { width, height } = element.getBoundingClientRect()
+            setPixelsPerUnit(
+                width > 0 && height > 0
+                    ? fitGalaxyCamera(bounds, width, height).pixelsPerUnit
+                    : null,
+            )
+        }
+        measure()
+        const observer =
+            typeof ResizeObserver !== "undefined"
+                ? new ResizeObserver(measure)
+                : undefined
+        observer?.observe(element)
+        window.addEventListener("resize", measure)
+        return () => {
+            observer?.disconnect()
+            window.removeEventListener("resize", measure)
+        }
+    }, [bounds])
+    const enhanced =
+        animationStatus === "animated" || animationStatus === "static"
     return (
-        <div className={styles.stage}>
+        <div
+            className={styles.stage}
+            data-stellar-renderer={enhanced ? "webgl" : "svg"}
+        >
             <GalaxyAnimation
                 galaxy={props.galaxy}
                 bounds={bounds}
                 enabled={props.animationEnabled ?? true}
-                onStatus={props.onAnimationStatus}
+                onStatus={reportAnimationStatus}
             />
             <svg
+                ref={svg}
                 viewBox={bounds.join(" ")}
                 preserveAspectRatio="xMidYMid meet"
                 role="group"
                 aria-label={t`Starmap`}
                 className={styles.starmap}
             >
-                {getConnectors(props.galaxy.stars).map(
-                    ([[x1, , y1], [x2, , y2]], index) => (
-                        <line
-                            key={index}
-                            x1={x1}
-                            y1={-y1}
-                            x2={x2}
-                            y2={-y2}
-                            strokeWidth={0.07}
-                            stroke="currentColor"
-                            className={styles.connector}
+                <defs>
+                    <mask
+                        id={connectorMaskId}
+                        maskUnits="userSpaceOnUse"
+                        x={bounds[0]}
+                        y={bounds[1]}
+                        width={bounds[2]}
+                        height={bounds[3]}
+                    >
+                        <rect
+                            x={bounds[0]}
+                            y={bounds[1]}
+                            width={bounds[2]}
+                            height={bounds[3]}
+                            fill="white"
                         />
-                    ),
-                )}
+                        {props.galaxy.stars.map((star) => (
+                            <circle
+                                key={star.index}
+                                data-star-occlusion={star.index}
+                                cx={star.position[0]}
+                                cy={-star.position[2]}
+                                r={getStellarDiskRadius(star) + 0.06}
+                                fill="black"
+                            />
+                        ))}
+                    </mask>
+                </defs>
+                <g
+                    mask={`url(#${connectorMaskId})`}
+                    aria-hidden="true"
+                    pointerEvents="none"
+                >
+                    {getConnectors(props.galaxy.stars).map(
+                        ([[x1, , y1], [x2, , y2]], index) => (
+                            <line
+                                key={index}
+                                x1={x1}
+                                y1={-y1}
+                                x2={x2}
+                                y2={-y2}
+                                strokeWidth={0.07}
+                                stroke="currentColor"
+                                className={styles.connector}
+                            />
+                        ),
+                    )}
+                </g>
                 {props.galaxy.stars
                     .toSorted((a, b) => a.position[1] - b.position[1])
                     .map((star) => (
@@ -286,6 +454,8 @@ const Starmap: FC<{
                             star={star}
                             seed={props.galaxy.seed}
                             search={props.search}
+                            enhanced={enhanced}
+                            pixelsPerUnit={pixelsPerUnit}
                             displayName={props.displayNames?.get(star.index)}
                         />
                     ))}
