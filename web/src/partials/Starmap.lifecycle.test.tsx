@@ -1,7 +1,7 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter, useLocation } from "react-router-dom"
-import { computePosition } from "@floating-ui/dom"
+import { computePosition, offset } from "@floating-ui/dom"
 import Starmap from "./Starmap"
 import { StarType } from "../enums"
 import { setupI18n } from "@lingui/core"
@@ -18,7 +18,11 @@ vi.mock("./GalaxyAnimation", () => ({
         return null
     },
 }))
-vi.mock("@floating-ui/dom", () => ({ computePosition: vi.fn(), flip: vi.fn() }))
+vi.mock("@floating-ui/dom", () => ({
+    computePosition: vi.fn(),
+    flip: vi.fn(),
+    offset: vi.fn(),
+}))
 afterEach(cleanup)
 beforeEach(() => {
     vi.mocked(computePosition).mockReset()
@@ -88,6 +92,7 @@ describe("starmap lifecycle and keyboard access", () => {
         fireEvent.focus(screen.getByRole("link", { name: "Alpha, #1" }))
         await act(async () => {})
         const popup = screen.getByRole("link", { name: "Alpha" })
+        expect(offset).toHaveBeenCalledWith(6)
         expect(computePosition).toHaveBeenCalledWith(
             expect.any(SVGElement),
             popup,

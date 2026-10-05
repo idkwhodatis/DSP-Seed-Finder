@@ -10,7 +10,7 @@ import {
 } from "react"
 import { createPortal } from "react-dom"
 import { Link, useNavigate } from "react-router-dom"
-import { computePosition, flip } from "@floating-ui/dom"
+import { computePosition, flip, offset } from "@floating-ui/dom"
 import { useLiveState } from "../hooks/useLiveState"
 import { StarType } from "../enums"
 import { useLingui } from "#lingui"
@@ -154,7 +154,10 @@ const StarNode: FC<{
             void computePosition(nodeElement, popupElement, {
                 strategy: "fixed",
                 placement: "top",
-                middleware: [flip({ fallbackPlacements: ["bottom"] })],
+                middleware: [
+                    offset(6),
+                    flip({ fallbackPlacements: ["bottom"] }),
+                ],
             })
                 .then(({ x, y }) => {
                     if (

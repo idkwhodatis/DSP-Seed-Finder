@@ -14,7 +14,11 @@ The map keeps its generated star positions, complete `xMidYMid meet` framing, co
 - Neutron stars use a blue-white compact surface, a faint magnetic-field contour, and slow, oblique pulsing polar beams. This is an illustrative pulsar-like cue, not a claim that every neutron star has visible jets
 - Black holes have an opaque dark central silhouette, narrow photon-ring cue, inclined filamented accretion disk, brighter approaching side, and a far-side lensed arc. This is an artistic impostor, not a relativistic ray tracer
 
-The stellar batch uses normal alpha compositing so a black-hole center actually obscures the background. Bounded shader glow replaces full-screen bloom: bright cores remain readable without washing out the surface texture. Fine granulation and corona threads fade as they become unresolved, and edge smoothing follows the actual framebuffer. Slow surface motion changes neither disk size nor star position.
+The stellar batch uses normal alpha compositing so a black-hole center actually obscures the background. Bounded shader glow replaces full-screen bloom: bright cores remain readable without washing out the surface texture. Fine granulation fades as it becomes unresolved, and edge smoothing follows the actual framebuffer. Slow surface motion changes neither disk size nor star position.
+
+## Selection and SVG layering
+
+A star's keyboard/hover marker uses the same center as its hit target, a three-screen-pixel gap, and thin non-scaling segmented strokes. The global HTML focus outline is suppressed only for these SVG nodes; it previously expanded in viewBox units into an oversized box. Escape dismisses the label while retaining visible keyboard focus. Labels leave six pixels of clearance, and connector lines are masked inside stellar disks so they cannot obscure the WebGL surface.
 
 ## Rendering budget and lifecycle
 
