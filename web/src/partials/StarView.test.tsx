@@ -204,6 +204,7 @@ describe("complete planet details", () => {
         expect(css).toMatch(/\.planetGrid \{[^}]*justify-items: start/)
         expect(css).toMatch(/\.detailCard > \.row \{[^}]*padding: 5px 0/)
         expect(css).toContain("--detail-label-width: 13rem")
+        expect(css).toContain("--detail-column-gap: 52px")
         expect(css).toContain("--detail-column-gap: 40px")
         expect(css).toMatch(
             /@media \(max-width: 960px\) \{\s*\.main \{\s*grid-template-columns: minmax\(0, 1fr\)/,
@@ -212,9 +213,28 @@ describe("complete planet details", () => {
             styles.detailCard!,
         )
         expect(css).toContain("--detail-label-width: 8rem")
-        expect(css).toContain("--detail-column-gap: 24px")
+        expect(css).toContain("--detail-column-gap: 28px")
         expect(css).toMatch(/\.planetName \{[^}]*overflow-wrap: anywhere/)
         expect(css).toMatch(/\.planetName \{[^}]*grid-column: 1 \/ -1/)
+    })
+    it("keeps nearby stars in one column without responsive overrides", () => {
+        const css = readFileSync("web/src/partials/StarView.module.css", "utf8")
+        const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter(
+            ([, selector]) =>
+                selector!
+                    .split(",")
+                    .some((part) => part.trim() === ".nearbyList"),
+        )
+        expect(
+            rules.flatMap(([, , body]) =>
+                [...body!.matchAll(/grid-template-columns:\s*([^;]+);/g)].map(
+                    ([, value]) => value,
+                ),
+            ),
+        ).toEqual(["minmax(0, 1fr)"])
+        render(content())
+        fireEvent.click(screen.getByText("Nearby Stars"))
+        expect(screen.getByRole("link", { name: /Other Star/ })).toBeVisible()
     })
     it("always shows full star details and keeps all planets after navigation", () => {
         const { rerender } = render(content())
