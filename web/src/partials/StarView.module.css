@@ -142,6 +142,7 @@
 }
 .planetGrid {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 12px;
 }
 .planet {
@@ -175,10 +176,6 @@
     .view {
         grid-template-columns: minmax(300px, 0.75fr) minmax(580px, 1.65fr);
     }
-    .planetGrid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        align-items: start;
-    }
 }
 @media (max-width: 1080px) {
     .view {
@@ -188,14 +185,9 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
         align-items: start;
     }
-    .planetGrid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        align-items: start;
-    }
 }
 @media (max-width: 760px) {
-    .main,
-    .planetGrid {
+    .main {
         grid-template-columns: minmax(0, 1fr);
     }
     .view {

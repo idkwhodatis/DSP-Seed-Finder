@@ -6,6 +6,7 @@ import {
     within,
 } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
+import { readFileSync } from "node:fs"
 import { MemoryRouter } from "react-router-dom"
 import { I18nProvider } from "@lingui/react"
 import { setupI18n } from "@lingui/core"
@@ -81,6 +82,21 @@ function content(selected = star, displayNames?: ReadonlyMap<number, string>) {
     )
 }
 describe("complete planet details", () => {
+    it("keeps planet cards in one column without responsive overrides", () => {
+        const css = readFileSync("web/src/partials/StarView.module.css", "utf8")
+        const planetRules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter(
+            ([, selector]) =>
+                selector!
+                    .split(",")
+                    .some((part) => part.trim() === ".planetGrid"),
+        )
+        const columnDeclarations = planetRules.flatMap(([, , body]) =>
+            [...body!.matchAll(/grid-template-columns:\s*([^;]+);/g)].map(
+                ([, value]) => value,
+            ),
+        )
+        expect(columnDeclarations).toEqual(["minmax(0, 1fr)"])
+    })
     it("renders every planet with a direct jump link and keeps details before nearby stars", () => {
         render(content())
         const planets = screen.getAllByRole("article")
