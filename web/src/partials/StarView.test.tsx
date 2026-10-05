@@ -195,6 +195,13 @@ describe("complete planet details", () => {
             expect(rule).toContain("min-height: 0")
         }
     })
+    it("bounds the stacked planet panel by its actual available pane height", () => {
+        const css = readFileSync("web/src/partials/StarView.module.css", "utf8")
+        const narrow = css.slice(css.indexOf("@media (max-width: 1080px)"))
+        expect(narrow).toContain("height: min(70dvh, 100%)")
+        expect(narrow).toContain("flex-direction: column")
+        expect(narrow).not.toContain("min-height: 280px")
+    })
     it("jumps repeatedly within the planet list while preserving route parameters", () => {
         render(content(star, undefined, "/galaxy/0/0?count=32&resource=2"))
         const last = screen.getAllByRole("article")[5]!

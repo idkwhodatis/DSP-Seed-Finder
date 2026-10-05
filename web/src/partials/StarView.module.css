@@ -185,20 +185,20 @@
 }
 @media (max-width: 1080px) {
     .view {
-        height: auto;
-        min-height: 100%;
-        overflow: visible;
-        grid-template-columns: minmax(0, 1fr);
-        grid-template-rows: auto auto;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
     }
     .main {
+        flex: none;
         overflow: visible;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         align-items: start;
     }
     .planets {
-        height: min(70dvh, 720px);
-        min-height: 280px;
+        flex: none;
+        /* Fit below the app header/star list, even on short mobile viewports. */
+        height: min(70dvh, 100%);
     }
 }
 @media (max-width: 760px) {
