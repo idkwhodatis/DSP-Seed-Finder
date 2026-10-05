@@ -9,6 +9,9 @@ export const STELLAR_KIND = {
     blackHole: 4,
 } as const
 
+/** Shared SVG/WebGL effect bound, inside the map's 2-unit framing margin. */
+export const STELLAR_EFFECT_RADIUS = 1.92
+
 export interface StellarProfile {
     kind: number
     /** Exact radius used by the accessible SVG, in map units. */
@@ -23,13 +26,19 @@ export interface StellarProfile {
 }
 
 /**
- * Compress the generator's physical radius into a readable map disk: one radius
- * unit maps to 0.4, larger stars approach 0.8, and tiny remnants retain a floor.
- * Type and spectral color never override size, so a red giant stays a giant.
+ * Keep ordinary stars and compact remnants on their existing physical-radius
+ * scale. Giants get a separate smooth 0.85–1.2 band so compression cannot make
+ * blue/white giants nearly indistinguishable from hot main-sequence stars.
+ * Physical ordering is retained within each class; color never determines size.
  */
-export function getStellarDiskRadius(star: Pick<Star, "radius">) {
+export function getStellarDiskRadius(
+    star: Pick<Star, "radius"> & Partial<Pick<Star, "type">>,
+) {
     const radius =
         Number.isFinite(star.radius) && star.radius > 0 ? star.radius : 1
+    if (star.type === StarType.GiantStar) {
+        return 0.85 + 0.35 * (radius / (4 + radius))
+    }
     return Math.max(0.14, 0.8 * (radius / (1 + radius)))
 }
 
@@ -42,7 +51,8 @@ export function getStellarProfile(
         : 0.5
     const radius = getStellarDiskRadius(star)
     // Large disks need less halo padding to remain inside the 2-unit map margin.
-    const extent = (preferred: number) => Math.min(preferred, 1.92 / radius)
+    const extent = (preferred: number) =>
+        Math.min(preferred, STELLAR_EFFECT_RADIUS / radius)
     switch (star.type) {
         case StarType.GiantStar:
             return {

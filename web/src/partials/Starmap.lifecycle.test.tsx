@@ -218,6 +218,11 @@ describe("centered stellar highlights and layered rendering", () => {
                     : "[data-star-fallback] circle[fill^='url(']"
             const disk = container.querySelector(diskSelector)!
             expect(Number(disk.getAttribute("r"))).toBe(profile.radius)
+            const halo = container.querySelector("[data-star-fallback] circle")!
+            expect(Number(halo.getAttribute("r"))).toBeLessThanOrEqual(1.92)
+            expect(Number(halo.getAttribute("r"))).toBeGreaterThan(
+                profile.radius,
+            )
             expect(Number(node.getAttribute("r"))).toBe(
                 Math.max(0.4, profile.radius),
             )
@@ -330,7 +335,9 @@ describe("centered stellar highlights and layered rendering", () => {
             )
             expect(highlight).toHaveAttribute("stroke-width", "1.3")
             expect(highlight).not.toHaveAttribute("transform")
-            expect(Number(highlight.getAttribute("r"))).toBeLessThan(1.2)
+            expect(Number(highlight.getAttribute("r"))).toBeCloseTo(
+                getStellarProfile(value.stars[0]!).radius + 0.3,
+            )
             fireEvent.keyDown(node, { key: "Escape" })
             expect(container.querySelector("[data-star-highlight]")).toBe(
                 highlight,

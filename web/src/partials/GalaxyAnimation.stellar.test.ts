@@ -1,10 +1,16 @@
-import { describe, expect, it } from "vitest"
+import { readFileSync } from "node:fs"
+import { generate, initSync } from "../../../pkg/dsp_seed_finder"
+import { beforeAll, describe, expect, it } from "vitest"
 import { StarType } from "../enums"
 import {
     getStellarDiskRadius,
     getStellarProfile,
     STELLAR_KIND,
 } from "./GalaxyAnimation.stellar"
+
+beforeAll(() =>
+    initSync({ module: readFileSync("pkg/dsp_seed_finder_bg.wasm") }),
+)
 
 const types = Object.values(StarType)
 
@@ -62,10 +68,13 @@ describe("stellar impostor profiles", () => {
         expect(getStellarDiskRadius({ radius: Number.MAX_VALUE })).toBe(0.8)
     })
 
-    it("does not shrink red giants or otherwise infer radius from color or type", () => {
+    it("uses a color-independent giant boost while leaving every other class unchanged", () => {
         for (const radius of [0.4, 1, 8, 16]) {
-            const expected = getStellarDiskRadius({ radius })
             for (const type of types) {
+                const expected =
+                    type === StarType.GiantStar
+                        ? 0.85 + (0.35 * radius) / (4 + radius)
+                        : getStellarDiskRadius({ radius })
                 for (const color of [0, 0.5, 1]) {
                     expect(
                         getStellarProfile({ type, color, radius }).radius,
@@ -85,6 +94,62 @@ describe("stellar impostor profiles", () => {
         })
         expect(redGiant.radius).toBeGreaterThan(blueGiant.radius)
         expect(redGiant.radius).toBeGreaterThan(0.7)
+    })
+
+    it.each([
+        { seed: 3, index: 14, spectr: "B" },
+        { seed: 150, index: 47, spectr: "A" },
+        { seed: 0, index: 14, spectr: "M" },
+        { seed: 54, index: 43, spectr: "F" },
+        { seed: 822, index: 9, spectr: "A" },
+    ])(
+        "makes real seed $seed $spectr giants clearly larger than O main-sequence stars",
+        ({ seed, index, spectr }) => {
+            const galaxy = generate(seed, {
+                starCount: 64,
+                resourceMultiplier: 1,
+                hiveInitialColonize: 1,
+                hiveMaxDensity: 1,
+                useActualVeins: false,
+            }) as Galaxy
+            const giant = galaxy.stars[index]!
+            const hotMain = galaxy.stars[59]!
+            expect(giant.type).toBe(StarType.GiantStar)
+            expect(giant.spectr).toBe(spectr)
+            expect(hotMain.type).toBe(StarType.MainSeqStar)
+            expect(hotMain.spectr).toBe("O")
+            const giantDisk = getStellarDiskRadius(giant)
+            const mainDisk = getStellarDiskRadius(hotMain)
+            expect(giantDisk).toBeGreaterThan(mainDisk * 1.5)
+            expect(giantDisk).toBeLessThanOrEqual(1.2)
+            expect(mainDisk).toBe(
+                getStellarDiskRadius({ radius: hotMain.radius }),
+            )
+            expect(getStellarProfile(giant).radius).toBe(giantDisk)
+        },
+    )
+
+    it("keeps giant radii smooth, ordered, and bounded without enlarging other stars", () => {
+        let previous = 0
+        for (const radius of [
+            0.1,
+            0.5,
+            1,
+            3,
+            6,
+            12,
+            30,
+            1000,
+            Number.MAX_VALUE,
+        ]) {
+            const disk = getStellarDiskRadius({
+                type: StarType.GiantStar,
+                radius,
+            })
+            expect(disk).toBeGreaterThan(previous)
+            expect(disk).toBeLessThanOrEqual(1.2)
+            previous = disk
+        }
     })
 
     it("keeps every effect inside the existing 2-unit framing margin at every size", () => {
@@ -170,7 +235,9 @@ describe("stellar impostor profiles", () => {
                 const star = Object.freeze({ type, color: 0.5, radius }) as Star
                 const profile = getStellarProfile(star)
                 expect(Object.values(profile).every(Number.isFinite)).toBe(true)
-                expect(profile.radius).toBe(0.4)
+                expect(profile.radius).toBeCloseTo(
+                    type === StarType.GiantStar ? 0.92 : 0.4,
+                )
                 expect(star.radius).toBe(radius)
                 expect(getStellarProfile(star)).toEqual(profile)
             }

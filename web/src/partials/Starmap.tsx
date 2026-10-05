@@ -16,7 +16,10 @@ import { StarType } from "../enums"
 import { useLingui } from "#lingui"
 import styles from "~styles"
 import GalaxyAnimation, { type GalaxyAnimationStatus } from "./GalaxyAnimation"
-import { getStellarDiskRadius } from "./GalaxyAnimation.stellar"
+import {
+    getStellarDiskRadius,
+    STELLAR_EFFECT_RADIUS,
+} from "./GalaxyAnimation.stellar"
 import {
     getGalaxyBounds,
     getGalaxyStarColor,
@@ -251,7 +254,7 @@ const StarNode: FC<{
                         <circle
                             cx={x}
                             cy={y}
-                            r={size * 1.9}
+                            r={Math.min(size * 1.9, STELLAR_EFFECT_RADIUS)}
                             fill={color}
                             opacity={0.07}
                         />
